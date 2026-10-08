@@ -154,7 +154,7 @@ function pages() {
 		return $found;
 	}
 	$t     = tables();
-	$found = array_column( $wpdb->get_results( "SELECT page, COUNT(*) AS n FROM {$t['pages']} GROUP BY page ORDER BY page", ARRAY_A ), 'n', 'page' ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Table name, cached.
+	$found = array_map( 'intval', array_column( $wpdb->get_results( "SELECT page, COUNT(*) AS n FROM {$t['pages']} GROUP BY page ORDER BY page", ARRAY_A ), 'n', 'page' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Table name, cached.
 	wp_cache_set( 'pages', $found, 'langsail' );
 	return $found;
 }

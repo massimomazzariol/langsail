@@ -113,6 +113,15 @@ function strings_page() {
 		<?php if ( isset( $_GET['saved'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only. ?>
 			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Translations saved.', 'langsail' ); ?></p></div>
 		<?php endif; ?>
+		<?php $errors = get_transient( 'langsail_errors_' . get_current_user_id() ); ?>
+		<?php if ( $errors ) : ?>
+			<?php delete_transient( 'langsail_errors_' . get_current_user_id() ); ?>
+			<div class="notice notice-error"><p><?php esc_html_e( 'These translations were not saved:', 'langsail' ); ?></p><ul>
+				<?php foreach ( $errors as $error ) : ?>
+					<li><?php echo esc_html( $error ); ?></li>
+				<?php endforeach; ?>
+			</ul></div>
+		<?php endif; ?>
 
 		<div class="langsail-summary">
 			<p>
@@ -170,6 +179,7 @@ function strings_page() {
 				<input type="hidden" name="action" value="langsail_translations">
 				<input type="hidden" name="return" value="<?php echo esc_attr( remove_query_arg( 'saved', wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Escaped, and redirect is validated on save. ?>">
 				<?php wp_nonce_field( 'langsail_translations' ); ?>
+				<p class="description"><?php esc_html_e( 'Markers like [1]...[/1] stand for links and formatting, [2/] for a line break: keep them around the matching words. The page shows the base text wherever a translation is empty.', 'langsail' ); ?></p>
 				<table class="widefat striped langsail-table">
 					<thead><tr>
 						<th scope="col"><?php echo esc_html( $settings['base_name'] ); ?></th>
@@ -181,7 +191,7 @@ function strings_page() {
 						<?php foreach ( $result['rows'] as $row ) : ?>
 							<tr>
 								<th scope="row" class="langsail-source" lang="<?php echo esc_attr( hreflang( $settings['base'] ) ); ?>">
-									<code><?php echo esc_html( $row['source'] ); ?></code>
+									<span class="langsail-text"><?php echo esc_html( display_text( $row['source'], $row['kind'] ) ); ?></span>
 									<?php if ( 'text' !== $row['kind'] ) : ?>
 										<span class="langsail-kind"><?php echo esc_html( 'title' === $row['kind'] ? __( 'page title', 'langsail' ) : __( 'attribute', 'langsail' ) ); ?></span>
 									<?php endif; ?>
@@ -195,7 +205,7 @@ function strings_page() {
 											echo esc_html( sprintf( __( 'Translation in %s', 'langsail' ), $language['name'] ) );
 											?>
 										</label>
-										<textarea id="<?php echo esc_attr( "ls-{$row['id']}-{$locale}" ); ?>" name="<?php echo esc_attr( "tr[{$locale}][{$row['id']}]" ); ?>" lang="<?php echo esc_attr( hreflang( $locale ) ); ?>" dir="auto" rows="<?php echo esc_attr( (string) min( 6, 1 + intdiv( strlen( $row['source'] ), 60 ) ) ); ?>"><?php echo esc_textarea( $tr['text'] ?? '' ); ?></textarea>
+										<textarea id="<?php echo esc_attr( "ls-{$row['id']}-{$locale}" ); ?>" name="<?php echo esc_attr( "tr[{$locale}][{$row['id']}]" ); ?>" lang="<?php echo esc_attr( hreflang( $locale ) ); ?>" dir="auto" rows="<?php echo esc_attr( (string) min( 6, 1 + intdiv( strlen( $row['source'] ), 60 ) ) ); ?>"><?php echo esc_textarea( $tr ? display_text( $tr['text'], $row['kind'], $row['source'] ) : '' ); ?></textarea>
 									</td>
 								<?php endforeach; ?>
 							</tr>
@@ -226,7 +236,22 @@ function strings_page() {
 	<?php
 }
 
-/** Save the submitted translations: text units keep safe HTML, attributes and titles plain text. */
+/**
+ * A stored text as translators see it: markers instead of tags for text units, plain characters
+ * instead of entities for everything.
+ *
+ * @param string $html   Stored text.
+ * @param string $kind   text, attr or title.
+ * @param string $source Source unit, for a translation (keeps the source's marker numbers).
+ */
+function display_text( $html, $kind, $source = null ) {
+	if ( 'text' !== $kind ) {
+		return html_entity_decode( $html, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	}
+	return null === $source ? to_placeholders( $html )['text'] : translation_placeholders( $html, $source );
+}
+
+/** Save the submitted translations, rebuilding text units from their markers. */
 function save_strings() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_die( esc_html__( 'You are not allowed to edit translations.', 'langsail' ), 403 );
@@ -234,25 +259,40 @@ function save_strings() {
 	check_admin_referer( 'langsail_translations' );
 	global $wpdb;
 	$languages = settings()['languages'];
-	$submitted = isset( $_POST['tr'] ) && is_array( $_POST['tr'] ) ? wp_unslash( $_POST['tr'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized per kind below.
+	$submitted = isset( $_POST['tr'] ) && is_array( $_POST['tr'] ) ? wp_unslash( $_POST['tr'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Rebuilt from markers or escaped below.
 	$ids       = array();
 	foreach ( $submitted as $texts ) {
 		$ids = array_merge( $ids, array_map( 'absint', array_keys( (array) $texts ) ) );
 	}
-	$ids   = array_filter( array_unique( $ids ) );
-	$kinds = $ids ? array_column( $wpdb->get_results( 'SELECT id, kind FROM ' . tables()['strings'] . ' WHERE id IN (' . implode( ',', $ids ) . ')', ARRAY_A ), 'kind', 'id' ) : array(); // phpcs:ignore WordPress.DB.PreparedSQL -- Integers.
+	$ids     = array_filter( array_unique( $ids ) );
+	$strings = $ids ? array_column( $wpdb->get_results( 'SELECT id, kind, source FROM ' . tables()['strings'] . ' WHERE id IN (' . implode( ',', $ids ) . ')', ARRAY_A ), null, 'id' ) : array(); // phpcs:ignore WordPress.DB.PreparedSQL -- Integers.
+	$errors  = array();
 	foreach ( $submitted as $locale => $texts ) {
 		if ( ! isset( $languages[ $locale ] ) || ! is_array( $texts ) ) {
 			continue;
 		}
 		$clean = array();
 		foreach ( $texts as $id => $text ) {
-			$id = absint( $id );
-			if ( isset( $kinds[ $id ] ) && is_string( $text ) ) {
-				$clean[ $id ] = 'text' === $kinds[ $id ] ? wp_kses_post( $text ) : sanitize_text_field( $text );
+			$string = $strings[ absint( $id ) ] ?? null;
+			if ( ! $string || ! is_string( $text ) ) {
+				continue;
 			}
+			$text = trim( $text );
+			if ( '' === $text || 'text' !== $string['kind'] ) {
+				$clean[ $string['id'] ] = esc_html( $text );
+				continue;
+			}
+			$html = from_placeholders( $text, $string['source'] );
+			if ( is_wp_error( $html ) ) {
+				$errors[] = sprintf( '%s (%s): %s', wp_html_excerpt( to_placeholders( $string['source'] )['text'], 60, '...' ), $languages[ $locale ]['name'], $html->get_error_message() );
+				continue;
+			}
+			$clean[ $string['id'] ] = $html;
 		}
 		save_translations( $locale, $clean );
+	}
+	if ( $errors ) {
+		set_transient( 'langsail_errors_' . get_current_user_id(), $errors, HOUR_IN_SECONDS );
 	}
 	$return = isset( $_POST['return'] ) ? esc_url_raw( wp_unslash( $_POST['return'] ) ) : '';
 	wp_safe_redirect( add_query_arg( 'saved', '1', $return ? $return : admin_url( 'admin.php?page=langsail' ) ) );

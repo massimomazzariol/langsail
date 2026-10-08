@@ -26,6 +26,7 @@ const FILE    = __FILE__;
 require_once __DIR__ . '/includes/languages.php';
 require_once __DIR__ . '/includes/router.php';
 require_once __DIR__ . '/includes/html.php';
+require_once __DIR__ . '/includes/placeholders.php';
 require_once __DIR__ . '/includes/store.php';
 require_once __DIR__ . '/includes/frontend.php';
 require_once __DIR__ . '/includes/switcher.php';

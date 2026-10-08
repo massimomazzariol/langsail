@@ -189,6 +189,38 @@ function translate_run( $html, array $run, callable $translate ) {
 		return substr( $html, $from, $to - $from );
 	}
 
+	// A unit wholly wrapped in phrasing tags (a menu link, a label span) is translated inside them.
+	while ( $first < $last && 'tag' === $run[ $first ]['type'] && ! $run[ $first ]['closing'] && 'tag' === $run[ $last ]['type'] && $run[ $last ]['closing'] && $run[ $first ]['name'] === $run[ $last ]['name'] && balanced( array_slice( $run, $first + 1, $last - $first - 1 ) ) ) {
+		++$first;
+		--$last;
+	}
+	// Decorative elements at either end (a bullet, an icon span: no words inside) stay out of the unit.
+	$words = fn( $a, $b ) => has_words( substr( $html, $run[ $a ]['start'], $run[ $b ]['end'] - $run[ $a ]['start'] ) );
+	$blank = fn( $i ) => 'text' === $run[ $i ]['type'] && '' === trim( substr( $html, $run[ $i ]['start'], $run[ $i ]['end'] - $run[ $i ]['start'] ) );
+	do {
+		$trimmed = false;
+		$close   = 'tag' === $run[ $first ]['type'] && ! $run[ $first ]['closing'] ? matching_close( $run, $first, $last ) : null;
+		if ( null !== $close && $close < $last && ! $words( $first, $close ) ) {
+			$first = $close + 1;
+			while ( $first < $last && $blank( $first ) ) {
+				++$first;
+			}
+			$trimmed = true;
+		}
+		$open = 'tag' === $run[ $last ]['type'] && $run[ $last ]['closing'] ? matching_open( $run, $first, $last ) : null;
+		if ( null !== $open && $open > $first && ! $words( $open, $last ) ) {
+			$last = $open - 1;
+			while ( $last > $first && $blank( $last ) ) {
+				--$last;
+			}
+			$trimmed = true;
+		}
+	} while ( $trimmed && $first < $last );
+
+	if ( $first > $last ) {
+		return substr( $html, $from, $to - $from );
+	}
+
 	if ( ! balanced( array_slice( $run, $first, $last - $first + 1 ) ) ) {
 		$out = '';
 		foreach ( $run as $token ) {
@@ -221,6 +253,48 @@ function translate_piece( $html, $start, $end, callable $translate ) {
 	}
 	$lead = strspn( $piece, " \t\n\r\f" );
 	return substr( $piece, 0, $lead ) . $new . substr( $piece, $lead + strlen( $core ) );
+}
+
+/**
+ * Index of the tag closing the element opened at $open, within $open..$last, or null.
+ *
+ * @param array $run  Run tokens.
+ * @param int   $open Index of an opening tag.
+ * @param int   $last Last index to look at.
+ */
+function matching_close( array $run, $open, $last ) {
+	$depth = 0;
+	for ( $i = $open; $i <= $last; $i++ ) {
+		if ( 'tag' !== $run[ $i ]['type'] || $run[ $i ]['name'] !== $run[ $open ]['name'] ) {
+			continue;
+		}
+		$depth += $run[ $i ]['closing'] ? -1 : 1;
+		if ( 0 === $depth ) {
+			return $i;
+		}
+	}
+	return null;
+}
+
+/**
+ * Index of the tag opening the element closed at $close, within $first..$close, or null.
+ *
+ * @param array $run   Run tokens.
+ * @param int   $first First index to look at.
+ * @param int   $close Index of a closing tag.
+ */
+function matching_open( array $run, $first, $close ) {
+	$depth = 0;
+	for ( $i = $close; $i >= $first; $i-- ) {
+		if ( 'tag' !== $run[ $i ]['type'] || $run[ $i ]['name'] !== $run[ $close ]['name'] ) {
+			continue;
+		}
+		$depth += $run[ $i ]['closing'] ? 1 : -1;
+		if ( 0 === $depth ) {
+			return $i;
+		}
+	}
+	return null;
 }
 
 /**

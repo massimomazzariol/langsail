@@ -25,6 +25,15 @@ function boot_router() {
 	}
 	current_language( $found['locale'] );
 	$_SERVER['REQUEST_URI'] = $found['uri'];
+	// Some servers (PHP's built-in one, some FastCGI setups) also pass the path as PATH_INFO,
+	// which WordPress prefers when matching rewrite rules.
+	foreach ( array( 'PATH_INFO', 'ORIG_PATH_INFO' ) as $key ) {
+		$path = isset( $_SERVER[ $key ] ) && is_string( $_SERVER[ $key ] ) ? $_SERVER[ $key ] : '';
+		$info = '' !== $path ? language_from_uri( wp_unslash( $path ) ) : null;
+		if ( $info ) {
+			$_SERVER[ $key ] = $info['uri'];
+		}
+	}
 
 	add_filter( 'locale', __NAMESPACE__ . '\\request_locale' );
 	add_filter( 'wp_redirect', __NAMESPACE__ . '\\localize_redirect' );
