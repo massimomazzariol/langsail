@@ -1,0 +1,7 @@
+{
+	"_note": "Locales listed first in the settings (most used on the web and by visitors to European sites), and the locale WordPress ships without a language pack.",
+	"common": [ "en_US", "en_GB", "it_IT", "es_ES", "fr_FR", "de_DE", "pt_PT", "pt_BR", "ru_RU", "uk", "pl_PL", "nl_NL", "ro_RO", "el", "tr_TR", "ar", "zh_CN", "ja", "ko_KR", "sv_SE", "cs_CZ", "hu_HU" ],
+	"builtin": {
+		"en_US": { "english_name": "English (United States)", "native_name": "English (US)" }
+	}
+}

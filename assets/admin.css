@@ -1,0 +1,73 @@
+/* Status colors follow the WordPress admin palette; override the custom properties to change them. */
+.langsail {
+	--langsail-muted: #50575e;
+	--langsail-missing: #d63638;
+	--langsail-review: #dba617;
+}
+
+.langsail-summary,
+.langsail-filters {
+	margin: 1em 0;
+}
+
+.langsail-progress {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5em 2em;
+	margin: 0;
+}
+
+.langsail-progress li {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	margin: 0;
+}
+
+.langsail-filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5em;
+}
+
+.langsail-view a {
+	margin-left: 0.5em;
+}
+
+.langsail-table th,
+.langsail-table td {
+	vertical-align: top;
+}
+
+.langsail-table .langsail-source {
+	width: 30%;
+	font-weight: 400;
+}
+
+.langsail-source code {
+	display: block;
+	padding: 0;
+	background: none;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.langsail-kind {
+	display: inline-block;
+	margin-top: 0.25em;
+	color: var(--langsail-muted);
+	font-size: 0.85em;
+}
+
+.langsail-table textarea {
+	width: 100%;
+}
+
+.langsail-table td.is-missing textarea {
+	border-color: var(--langsail-missing);
+}
+
+.langsail-table td.is-review textarea {
+	border-color: var(--langsail-review);
+}

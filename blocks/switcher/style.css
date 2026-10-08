@@ -1,0 +1,13 @@
+.wp-block-langsail-switcher ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--wp--style--block-gap, 0.5em);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.wp-block-langsail-switcher a[aria-current] {
+	font-weight: 700;
+	text-decoration: none;
+}
