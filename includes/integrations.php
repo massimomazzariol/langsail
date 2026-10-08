@@ -14,7 +14,7 @@ add_action( 'langsail_translations_saved', __NAMESPACE__ . '\\tsf_clear_sitemap'
 add_action( 'langsail_page_scanned', __NAMESPACE__ . '\\tsf_clear_sitemap' );
 
 // Mintchat: the pre-filled WhatsApp message lives inside a link, not in the page text.
-add_filter( 'mintchat_message', __NAMESPACE__ . '\\translate' );
+add_filter( 'mintchat_message', __NAMESPACE__ . '\\translate_string' );
 
 /**
  * The SEO Framework writes its sitemap itself (output buffers are cleared): add the indexable language
@@ -65,7 +65,7 @@ function fluentform_vars( $vars, $form ) {
 	foreach ( (array) ( $vars['rules'] ?? array() ) as $field => $rules ) {
 		foreach ( (array) $rules as $name => $rule ) {
 			if ( isset( $rule['message'] ) ) {
-				$vars['rules'][ $field ][ $name ]['message'] = translate( $rule['message'] );
+				$vars['rules'][ $field ][ $name ]['message'] = translate_string( $rule['message'] );
 			}
 		}
 	}
@@ -73,7 +73,7 @@ function fluentform_vars( $vars, $form ) {
 		$settings = \FluentForm\App\Helpers\Helper::getFormMeta( $form->id, 'formSettings', array() );
 		translate_markup( $settings['confirmation']['messageToShow'] ?? '' );
 		foreach ( fluentform_visitor_notifications( (int) $form->id ) as $notification ) {
-			translate( $notification['subject'] ?? '' );
+			translate_string( $notification['subject'] ?? '' );
 			translate_markup( $notification['message'] ?? '' );
 		}
 	}
@@ -109,7 +109,7 @@ function fluentform_visitor_notifications( $form_id ) {
  */
 function fluentform_visitor_email( $feed ) {
 	if ( 'notifications' === ( $feed['meta_key'] ?? '' ) && fluentform_is_visitor_email( $feed['settings'] ?? null ) && is_translated_request() ) {
-		$feed['settings']['subject'] = translate( $feed['settings']['subject'] ?? '' );
+		$feed['settings']['subject'] = translate_string( $feed['settings']['subject'] ?? '' );
 		$feed['settings']['message'] = translate_markup( $feed['settings']['message'] ?? '' );
 	}
 	return $feed;
@@ -123,7 +123,7 @@ function fluentform_visitor_email( $feed ) {
 function fluentform_validations( $validations ) {
 	if ( isset( $validations[1] ) && is_array( $validations[1] ) ) {
 		foreach ( $validations[1] as $key => $message ) {
-			$validations[1][ $key ] = translate( $message );
+			$validations[1][ $key ] = translate_string( $message );
 		}
 	}
 	return $validations;
@@ -140,7 +140,7 @@ function fluentform_date_labels( $i18n ) {
 	unset( $labels['_note'] );
 	foreach ( (array) $labels as $key => $text ) {
 		if ( ! isset( $i18n[ $key ] ) ) {
-			$i18n[ $key ] = translate( $text );
+			$i18n[ $key ] = translate_string( $text );
 		}
 	}
 	return $i18n;

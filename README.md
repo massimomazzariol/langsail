@@ -1,40 +1,118 @@
-# LangSail
+<p align="center">
+  <img src=".wordpress-org/banner-1544x500.jpg" alt="LangSail: one structure, every language. Translate your WordPress site from one table." width="100%">
+</p>
 
-Cookie-free multilingual WordPress sites with **one structure**. Pages, templates and menus are built once in the base language; every other language is a translation of their texts, kept in a table. Change the layout once and every language follows.
+<p align="center">
+  <img src=".wordpress-org/icon.svg" alt="" width="64" height="64"><br>
+  <strong>LangSail</strong><br>
+  Multilingual WordPress with one structure: build every page once, translate its texts in a table.<br>
+  No cookies, no JavaScript on the site, no external services.
+</p>
 
-## How it works
+<p align="center">
+  <img alt="WordPress 7.0+" src="https://img.shields.io/badge/WordPress-7.0%2B-21759b?logo=wordpress&logoColor=white">
+  <img alt="PHP 8.1+" src="https://img.shields.io/badge/PHP-8.1%2B-777bb4?logo=php&logoColor=white">
+  <img alt="Frontend JS: 0 KB" src="https://img.shields.io/badge/frontend%20JS-0%20KB-0d9488">
+  <img alt="Cookies: none" src="https://img.shields.io/badge/cookies-none-0d9488">
+  <img alt="AI ready: Abilities API and MCP" src="https://img.shields.io/badge/AI%20ready-Abilities%20API%20%2B%20MCP-1e40af">
+  <img alt="License: GPL-2.0-or-later" src="https://img.shields.io/badge/license-GPL--2.0--or--later-blue">
+</p>
 
-- **Languages in the address.** The base language lives at `/`, the others at `/it/`, `/es/`, `/ru/`... No cookies, no redirects by browser language, nothing stored in the visitor's browser.
-- **Text units.** A text unit is what a person reads as one piece: a paragraph with its links and bold words, a heading, a menu item, a button, an image description (alt), a field placeholder, the page title and SEO description. LangSail finds them in the page as visitors see it, header, footer and plugin output included.
-- **The translation table.** LangSail > Translations lists every text of the site, one column per language, with page and status filters, search and progress. Links and formatting appear as markers (`Hello [1]our team[/1]`), so a translation cannot break the HTML.
-- **New texts are collected** with "Scan the site for new texts": every published page is read as visitors see it and anything new appears as missing.
-- **Untranslated texts fall back** to the base language: nothing breaks while a translation is in progress.
-- **WordPress itself speaks the language.** On `/it/` the site runs in Italian: WordPress, theme and plugin strings, dates, `<html lang>`. Saving the languages downloads their WordPress.org language packs.
-- **Search engines.** Each page links its language versions with `hreflang` (base language as `x-default`); canonical links and internal links move into the page's language.
-- **Opt out** of translation with the HTML standard: `translate="no"` or the `notranslate` class (brand names, code). Hidden anti-spam fields are skipped too (`data/skip-classes.json`, filter `langsail_skip_classes`).
-- **Translated addresses (optional).** Each word of an address can have its own word per language (`/it/privacy/` for `/privacy-policy/`); links, the switcher, hreflang and the sitemap follow, and the original words keep working.
-- **AI ready.** Through the WordPress Abilities API (REST and MCP Adapter) an AI agent can list the languages and progress (`langsail/list-languages`), fetch the texts still to translate (`langsail/list-texts`), save translations with marker validation (`langsail/save-translations`) and scan the site (`langsail/scan`). LangSail calls no external service: the agent the site owner connects does the translating, with that user's permissions.
-- **Translator role.** Translators (role *Translator*, capability `langsail_translate`) see the translation table, imports and exports; the settings stay with administrators.
+---
+
+Most multilingual plugins copy every page once per language: change a layout and you change it four times. LangSail keeps **a single version** of every page, template and menu, written in the base language. Each other language is a translation of its texts, kept in a table. Change the layout once and every language follows.
+
+Completely free: no paid tier, no account, no translation credits.
+
+## Screenshots
+
+| Translations | A page in Italian |
+| --- | --- |
+| ![The Translations screen: progress per language, the pages overview with texts missing per language and links to each language version, and the translation table](.wordpress-org/screenshot-1.png) | ![A bakery home page in Italian with the language switcher in the header: flags and codes EN, IT, ES, DE, FR](.wordpress-org/screenshot-2.png) |
+
+| Settings |
+| --- |
+| ![LangSail settings: base language, translation languages with the common ones first, indexing threshold and never-translate list](.wordpress-org/screenshot-3.png) |
+
+## Features
+
+- **Languages in the address.** The base language lives at `/`, the others at `/it/`, `/es/`, `/de/`... No cookies, no redirects by browser language, nothing stored in the visitor's browser.
+- **Every text, one table.** A text unit is what a person reads as one piece: a paragraph with its links and bold words, a heading, a menu item, a button, an image description, a field placeholder, the page title and SEO description. LangSail finds them in the page as visitors see it, header, footer and other plugins' output included.
+- **Pages overview.** Every page with the texts still missing in each language, one click to exactly those texts and to the page in that language. Filter by page, language, missing or to review.
+- **Markup-safe.** Links and formatting appear as markers (`Hello [1]our team[/1]`), checked on save, so a translation cannot break the HTML.
+- **Edits are not lost.** When a sentence changes, the old translation is carried over and marked *to review*. Untranslated texts fall back to the base language.
+- **WordPress speaks the language.** On `/it/` the site runs in Italian: WordPress, theme and plugin strings, dates, `<html lang>`. Language packs are downloaded when you add a language.
+- **SEO first.** `hreflang` alternates with `x-default`, localized canonical and internal links, translated titles, descriptions and JSON-LD, language versions in the sitemap. A language version is indexed only once its page is translated (threshold in the settings); until then it is sent with `noindex`.
+- **Translated addresses (optional).** `/it/chi-siamo/` for `/about/`; links, switcher, hreflang and sitemap follow, and the original words keep working.
+- **Language switcher block.** Native names or short codes, optional flags, every design tool of the block editor.
+- **Import and export.** JSON with every text, language and address (local to live), PO per language for Poedit or a translator.
+- **Translator role.** Translators get the table, imports and exports; settings stay with administrators.
+- **Works with other plugins.** Fluent Forms messages and visitor emails, The SEO Framework sitemap, [Mintchat](https://github.com/massimomazzariol/mintchat) chat messages, and public filters for any plugin.
+
+## How light is it
+
+Measured on WordPress 7.1 with Twenty Twenty-Five and five languages:
+
+| | Size |
+| --- | --- |
+| Frontend JavaScript | **0 bytes** |
+| Cookies, local storage, external calls | **none** |
+| Switcher stylesheet | 0.7 KB, inlined, only on pages with the switcher |
+| Flags (optional) | about 0.7 KB per language, SVG |
+| `hreflang` links | under 0.1 KB per language |
+| Translating a page | about 8 ms for a 150 KB page, one cached dictionary query |
+| Base language pages | untouched: no output buffering |
+| Release ZIP | 182 KB, most of it the 201 optional flags |
 
 ## Usage
 
 1. Activate the plugin and confirm the base language under **LangSail > Settings**.
 2. Choose the translation languages (common ones are listed first).
-3. Open **LangSail > Translations**, scan the site, translate. The **Pages** overview shows what is missing per page and language, with links to exactly those texts and to the page in each language.
-4. Add the **Language switcher** block where visitors should change language (usually the header).
+3. Open **LangSail > Translations**, scan the site, translate.
+4. Add the **Language switcher** block where visitors change language, usually the header.
 
-WP-CLI: `wp langsail scan`, `stats`, `export`, `import`, `cleanup`.
+New texts are collected by **Scan the site for new texts**, and automatically when you save in the block or site editor. To keep a brand name or code as it is, add it to **Never translate** or mark it in HTML with `translate="no"` or the `notranslate` class.
+
+## AI agents
+
+LangSail is AI ready without calling any AI itself. It registers its actions on the WordPress Abilities API, so the agent you connect can translate the site through the REST API (`/wp-json/wp-abilities/v1/`) or MCP with the official [WordPress MCP Adapter](https://github.com/WordPress/mcp-adapter).
+
+| Ability | What it does |
+| --- | --- |
+| `langsail/list-languages` | Base language, translation languages and how many texts each has translated. Read-only. |
+| `langsail/list-texts` | Texts of one language, filtered by missing, to review or all, by page and search, with paging. Read-only. |
+| `langsail/save-translations` | Saves a batch of translations into one language. Translations with wrong markers are rejected and returned as errors. |
+| `langsail/scan` | Visits every page to collect new and changed texts. |
+
+All abilities need the `langsail_translate` capability (administrators and the Translator role) and run with that user's permissions. LangSail sends nothing anywhere: your agent reads the texts and writes the translations. Example prompt: *"Translate every missing text of the site into German, keep the markers, and save them as to review."*
+
+## For developers
+
+```php
+// Translate a plain text in the current language (collected by scans).
+$label = apply_filters( 'langsail_translate', $label );
+
+// Translate a piece of HTML, unit by unit.
+$html = apply_filters( 'langsail_translate_html', $html );
+
+// Site languages, and a field per language in your own settings.
+$languages = apply_filters( 'langsail_languages', array() );
+$text      = apply_filters( 'langsail_get_translation', '', $source, $locale );
+do_action( 'langsail_set_translation', $source, $locale, $translation );
+```
+
+The filter `langsail_skip_classes` adds classes whose elements are never translated. WP-CLI: `wp langsail scan`, `stats`, `export`, `import`, `cleanup`.
 
 ## Development
 
 The integration test runs on any WordPress site with the plugin active:
 
 ```
-wp eval-file wp-content/plugins/langsail/tests/integration.php
+wp eval-file path/to/langsail/tests/integration.php
 ```
 
 In WordPress Studio, prefix the command with `studio`.
 
 ## License
 
-GPL-2.0-or-later. Copyright 2026 Massimo Mazzariol, https://github.com/massimomazzariol/langsail. See [NOTICE](NOTICE): keep it, with the copyright notices, when you redistribute LangSail or a work based on it.
+GPL-2.0-or-later. Copyright 2026 Massimo Mazzariol, https://github.com/massimomazzariol/langsail. See [NOTICE](NOTICE): keep it, with the copyright notices, when you redistribute LangSail or a work based on it. Flags: [circle-flags](https://github.com/HatScripts/circle-flags), MIT.

@@ -9,6 +9,10 @@ namespace LangSail;
 
 defined( 'ABSPATH' ) || exit;
 
+// LangSail's own tables: names come from tables() ($wpdb->prefix plus fixed names), every value is
+// prepared or cast to an integer, and the results that pages read are cached.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders
+
 const DB_VERSION = '1';
 const STATUSES   = array( 'translated', 'review' );
 
@@ -310,7 +314,25 @@ function page_progress( $page ) {
 }
 
 /**
- * Delete the texts that are on no page any more, with their translations.
+ * Forget the pages a complete scan did not find (deleted or unpublished): their texts become unused.
+ *
+ * @param string[] $keep Page keys found by the scan.
+ * @return int Number of page links removed.
+ */
+function prune_pages( array $keep ) {
+	global $wpdb;
+	$keep = array_values( array_filter( $keep, 'is_string' ) );
+	if ( ! $keep ) {
+		return 0;
+	}
+	$t       = tables();
+	$removed = (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$t['pages']} WHERE page NOT IN (" . implode( ',', array_fill( 0, count( $keep ), '%s' ) ) . ')', $keep ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
+	wp_cache_delete( 'pages', 'langsail' );
+	return $removed;
+}
+
+/**
+ * Delete texts that are on no page any more, with their translations.
  *
  * @return int Number of texts deleted.
  */

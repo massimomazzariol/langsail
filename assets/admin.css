@@ -1,4 +1,7 @@
-/* Status colors follow the WordPress admin palette; override the custom properties to change them. */
+/*
+ * Status colors follow the WordPress admin palette;
+ * override the custom properties to change them.
+ */
 .langsail {
 	--langsail-muted: #50575e;
 	--langsail-missing: #d63638;

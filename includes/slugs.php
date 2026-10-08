@@ -68,30 +68,48 @@ function page_slugs() {
 	return array_values( array_unique( $found ) );
 }
 
-/** Save the translated slugs from the Translations screen. */
-function save_slugs() {
-	if ( ! can_translate() ) {
-		wp_die( esc_html__( 'You are not allowed to edit translations.', 'langsail' ), 403 );
-	}
-	check_admin_referer( 'langsail_slugs' );
-	$submitted = isset( $_POST['slug'] ) && is_array( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized below.
-	$all       = get_option( SLUGS_OPTION, array() );
-	$all       = is_array( $all ) ? $all : array();
+/**
+ * Store translated slugs of the site languages (from the form or an import). An empty slug, or one
+ * equal to the original, removes the translation.
+ *
+ * @param mixed $submitted Locale => (base slug => translated slug).
+ * @return int Number of slugs written or removed.
+ */
+function set_slugs( $submitted ) {
+	$all   = get_option( SLUGS_OPTION, array() );
+	$all   = is_array( $all ) ? $all : array();
+	$count = 0;
 	foreach ( settings()['languages'] as $locale => $language ) {
-		foreach ( (array) ( $submitted[ $locale ] ?? array() ) as $base => $slug ) {
+		$items = $submitted[ $locale ] ?? array();
+		foreach ( is_array( $items ) ? $items : array() as $base => $slug ) {
 			$base = sanitize_title( (string) $base );
-			$slug = sanitize_title( (string) $slug );
+			$slug = sanitize_title( is_string( $slug ) ? $slug : '' );
+			if ( '' === $base ) {
+				continue;
+			}
 			if ( '' === $slug || $slug === $base ) {
 				unset( $all[ $locale ][ $base ] );
-			} elseif ( '' !== $base ) {
+			} else {
 				$all[ $locale ][ $base ] = $slug;
 			}
+			++$count;
 		}
 		if ( empty( $all[ $locale ] ) ) {
 			unset( $all[ $locale ] );
 		}
 	}
 	update_option( SLUGS_OPTION, $all );
+	return $count;
+}
+
+/** Save the translated slugs from the Translations screen. */
+function save_slugs() {
+	if ( ! can_translate() ) {
+		wp_die( esc_html__( 'You are not allowed to edit translations.', 'langsail' ), 403 );
+	}
+	check_admin_referer( 'langsail_slugs' );
+	$submitted = isset( $_POST['slug'] ) && is_array( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized by set_slugs().
+	set_slugs( $submitted );
 	$return = isset( $_POST['return'] ) ? esc_url_raw( wp_unslash( $_POST['return'] ) ) : '';
 	wp_safe_redirect( add_query_arg( 'saved', '1', $return ? $return : admin_url( 'admin.php?page=langsail' ) ) );
 	exit;

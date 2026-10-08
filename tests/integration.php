@@ -1,6 +1,6 @@
 <?php
 /**
- * Run with: wp eval-file wp-content/plugins/langsail/tests/integration.php
+ * Run from a clone of the repository: wp eval-file path/to/langsail/tests/integration.php
  * In WordPress Studio, prefix the command with studio. Settings and translations are restored in finally.
  *
  * @package LangSail
@@ -193,6 +193,11 @@ try {
 	$check( str_contains( $body, 'lang="it-IT"' ) || str_contains( $body, 'lang="it"' ), 'The page declares the request language' );
 	$check( str_contains( $body, 'hreflang="x-default"' ) && str_contains( $body, 'hreflang="ru"' ), 'Language versions are linked with hreflang' );
 
+	// A complete scan forgets pages it did not find.
+	record_page( '/langsail-keep-test/', array( 'LangSail keep test' => 'text' ) );
+	$check( 1 === prune_pages( array_values( array_diff( array_keys( pages() ), array( '/langsail-keep-test/' ) ) ) ) && ! isset( pages()['/langsail-keep-test/'] ) && isset( pages()[ $page ] ), 'Pages missing from a complete scan are forgotten, the others kept' );
+	$check( 0 === prune_pages( array() ), 'An empty scan result forgets nothing' );
+
 	// Edited texts and cleanup.
 	record_page( $page, array( 'LangSail test sentence one, edited.' => 'text' ) );
 	$edited = current( query_strings( array( 'page' => $page, 'locales' => array( 'it_IT' ) ) )['rows'] );
@@ -207,6 +212,14 @@ try {
 
 	$honeypot = units( '<form><div class="ff-el-group ff-hpsf-container"><label>Newsletter</label></div><p class="x notranslate">Brand</p><label>Your name</label></form>' );
 	$check( array( 'Your name' ) === array_keys( $honeypot ), 'Hidden anti-spam fields and notranslate elements are not collected' );
+
+	// Messages of other plugins (a Mintchat button with its own message) go through the same table.
+	save_translations( 'it_IT', array( (int) $other['id'] => 'Qualcosa di completamente diverso.' ) );
+	current_language( 'it_IT' );
+	$message = apply_filters( 'mintchat_message', 'Something completely different here.', '' );
+	current_language( settings()['base'] );
+	$check( 'Qualcosa di completamente diverso.' === $message, 'Chat button messages are translated through the mintchat_message filter' );
+	save_translations( 'it_IT', array( (int) $other['id'] => '' ) );
 
 	// AI abilities and scans without a browser.
 	if ( function_exists( 'wp_get_ability' ) ) {
@@ -230,6 +243,10 @@ try {
 	update_option( SLUGS_OPTION, array( 'it_IT' => array( 'privacy-policy' => 'privacy', 'about' => 'chi-siamo' ) ) );
 	$check( home_url( '/it/privacy/?a=1' ) === localize_url( home_url( '/privacy-policy/?a=1' ), 'it_IT' ) && home_url( '/es/privacy-policy/' ) === localize_url( home_url( '/privacy-policy/' ), 'es_ES' ), 'Links use the translated words of the address in that language only' );
 	$check( $home . 'privacy-policy/?a=1' === language_from_uri( $home . 'it/privacy/?a=1' )['uri'] && $home . 'privacy-policy/' === language_from_uri( $home . 'it/privacy-policy/' )['uri'], 'Translated and original words both lead to the page' );
+	$moved = export_json();
+	update_option( SLUGS_OPTION, array() );
+	import_json( json_decode( wp_json_encode( $moved ), true ) );
+	$check( array( 'it_IT' => array( 'privacy-policy' => 'privacy', 'about' => 'chi-siamo' ) ) === get_option( SLUGS_OPTION ), 'Translated address words travel with the JSON export' );
 	$privacy = url_to_postid( home_url( '/privacy-policy/' ) );
 	if ( $privacy ) {
 		$response = wp_remote_get( home_url( '/it/privacy/' ), $http );

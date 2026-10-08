@@ -2,7 +2,7 @@
 /**
  * Import and export of texts and translations.
  *
- * JSON: every text and every language in one file, lossless; importing it on another site (local to
+ * JSON: every text, every language and the translated address words in one file, lossless; importing it on another site (local to
  * live) creates the texts that site has not scanned yet. PO: one language per file for Poedit or a
  * translator; texts show markers instead of HTML, fuzzy entries come back as "review".
  *
@@ -13,12 +13,16 @@ namespace LangSail;
 
 defined( 'ABSPATH' ) || exit;
 
+// LangSail's own tables: names come from tables() ($wpdb->prefix plus fixed names), every value is
+// prepared or cast to an integer, and the results that pages read are cached.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders
+
 const EXPORT_FORMAT = 'langsail';
 
 /**
  * Every text with its translations.
  *
- * @return array{format: string, version: int, base: string, strings: array}
+ * @return array{format: string, version: int, base: string, strings: array, slugs: object}
  */
 function export_json() {
 	global $wpdb;
@@ -49,6 +53,7 @@ function export_json() {
 		'version' => 1,
 		'base'    => settings()['base'],
 		'strings' => $out,
+		'slugs'   => (object) get_option( SLUGS_OPTION, array() ),
 	);
 }
 
@@ -91,6 +96,9 @@ function import_json( $data ) {
 		foreach ( $statuses as $status => $texts ) {
 			save_translations( $locale, $texts, $status );
 		}
+	}
+	if ( isset( $data['slugs'] ) && is_array( $data['slugs'] ) ) {
+		set_slugs( $data['slugs'] );
 	}
 	return $count;
 }

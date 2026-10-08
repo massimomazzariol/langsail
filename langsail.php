@@ -57,7 +57,7 @@ boot_router();
 
 /** Load the interface translations shipped in languages/ (wordpress.org language packs take precedence). */
 function load_textdomain() {
-	load_plugin_textdomain( 'langsail', false, dirname( plugin_basename( FILE ) ) . '/languages' );
+	load_plugin_textdomain( 'langsail', false, dirname( plugin_basename( FILE ) ) . '/languages' ); // phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- Ships its own translations outside WordPress.org.
 }
 
 /** Create the tables and propose the current site language as the base language. */

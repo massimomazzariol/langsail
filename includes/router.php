@@ -42,8 +42,8 @@ function boot_router() {
 	// Some servers (PHP's built-in one, some FastCGI setups) also pass the path as PATH_INFO,
 	// which WordPress prefers when matching rewrite rules.
 	foreach ( array( 'PATH_INFO', 'ORIG_PATH_INFO' ) as $key ) {
-		$path = isset( $_SERVER[ $key ] ) && is_string( $_SERVER[ $key ] ) ? $_SERVER[ $key ] : '';
-		$info = '' !== $path ? language_from_uri( wp_unslash( $path ) ) : null;
+		$path = isset( $_SERVER[ $key ] ) && is_string( $_SERVER[ $key ] ) ? wp_unslash( $_SERVER[ $key ] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Compared and rewritten, never printed.
+		$info = '' !== $path ? language_from_uri( $path ) : null;
 		if ( $info ) {
 			$_SERVER[ $key ] = $info['uri'];
 		}

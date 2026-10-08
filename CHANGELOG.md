@@ -31,3 +31,7 @@
 - Scans without a browser: wp langsail scan and the scan ability use a short-lived token.
 - Hidden anti-spam fields (Fluent Forms honeypot, whose label changes on every load) are never collected (data/skip-classes.json, filter langsail_skip_classes).
 - Italian translation of the interface.
+- A complete scan forgets pages that no longer exist (deleted or unpublished), so their texts can be cleaned up; scans cover every published post.
+- Language names fall back to the native name when the settings were written without names (code, WP-CLI).
+- Translated address words travel with the JSON export.
+- Plugin Check (WordPress.org) passes with no errors or warnings.

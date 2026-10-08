@@ -14,6 +14,7 @@ add_action( 'admin_post_langsail_translations', __NAMESPACE__ . '\\save_strings'
 add_action( 'admin_post_langsail_export', __NAMESPACE__ . '\\download_export' );
 add_action( 'admin_post_langsail_import', __NAMESPACE__ . '\\upload_import' );
 add_action( 'admin_post_langsail_cleanup', __NAMESPACE__ . '\\cleanup_unused' );
+add_action( 'wp_ajax_langsail_prune', __NAMESPACE__ . '\\ajax_prune' );
 add_action( 'enqueue_block_editor_assets', __NAMESPACE__ . '\\editor_scan_assets' );
 add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\strings_assets' );
 
@@ -41,6 +42,7 @@ function strings_assets( $hook ) {
 				'urls'  => scan_urls(),
 				'arg'   => SCAN_ARG,
 				'nonce' => wp_create_nonce( 'langsail_scan' ),
+				'prune' => admin_url( 'admin-ajax.php?action=langsail_prune' ),
 				'i18n'  => array(
 					/* translators: 1: pages done, 2: pages in total. */
 					'progress' => __( 'Scanning page %1$d of %2$d...', 'langsail' ),
@@ -317,8 +319,8 @@ function download_export() {
 	check_admin_referer( 'langsail_export' );
 	$host = sanitize_file_name( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
 	$date = gmdate( 'Y-m-d' );
-	if ( 'po' === ( $_GET['format'] ?? '' ) ) {
-		$locale = sanitize_locale( wp_unslash( $_GET['locale'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Whitelisted format.
+	if ( 'po' === sanitize_key( wp_unslash( $_GET['format'] ?? '' ) ) ) {
+		$locale = sanitize_locale( wp_unslash( $_GET['locale'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized by sanitize_locale().
 		if ( ! isset( settings()['languages'][ $locale ] ) ) {
 			wp_die( esc_html__( 'Unknown language.', 'langsail' ), 400 );
 		}
@@ -477,4 +479,14 @@ function pages_overview( array $languages, array $filters ) {
 		<?php endif; ?>
 	</details>
 	<?php
+}
+
+/** After a complete scan from the Translations screen: forget the pages it did not find. */
+function ajax_prune() {
+	if ( ! can_translate() ) {
+		wp_send_json_error( null, 403 );
+	}
+	check_ajax_referer( 'langsail_scan' );
+	$keys = isset( $_POST['pages'] ) && is_array( $_POST['pages'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['pages'] ) ) : array();
+	wp_send_json_success( prune_pages( $keys ) );
 }

@@ -11,6 +11,10 @@ namespace LangSail;
 
 defined( 'ABSPATH' ) || exit;
 
+// LangSail's own tables: names come from tables() ($wpdb->prefix plus fixed names), every value is
+// prepared or cast to an integer, and the results that pages read are cached.
+// phpcs:disable WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders
+
 const MARKER_PATTERN = '/\[(\/?)(\d+)(\/?)\]/';
 
 /**

@@ -28,6 +28,12 @@ LangSail keeps a single version of every page, template and menu, written in the
 * Translator role; WP-CLI commands (scan, stats, export, import, cleanup)
 * Import and export: JSON for moving between sites, PO for translators
 
+== Screenshots ==
+
+1. The Translations screen: progress per language, pages overview with what is missing, translation table.
+2. A page in Italian with the language switcher in the header.
+3. Settings: base language, translation languages, indexing threshold, never-translate list.
+
 == Changelog ==
 
 = 0.1.0 =

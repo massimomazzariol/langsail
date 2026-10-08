@@ -20,7 +20,7 @@ function scan_urls() {
 		array(
 			'post_type'      => $types,
 			'post_status'    => 'publish',
-			'posts_per_page' => 500,
+			'posts_per_page' => -1, // A scan that missed pages would forget their texts (prune_pages).
 			'fields'         => 'ids',
 			'orderby'        => 'menu_order title',
 			'order'          => 'ASC',
@@ -60,6 +60,7 @@ function is_scan_token( $value ) {
  */
 function scan_site() {
 	$token  = scan_token();
+	$keys   = array();
 	$result = array(
 		'pages'  => 0,
 		'new'    => 0,
@@ -71,10 +72,14 @@ function scan_site() {
 		if ( is_array( $report ) && isset( $report['page'] ) ) {
 			++$result['pages'];
 			$result['new'] += (int) ( $report['new'] ?? 0 );
+			$keys[]         = (string) $report['page'];
 		} else {
 			$result['failed'][] = $url;
 		}
 	}
 	delete_transient( SCAN_TOKEN );
+	if ( ! $result['failed'] ) {
+		prune_pages( $keys );
+	}
 	return $result;
 }

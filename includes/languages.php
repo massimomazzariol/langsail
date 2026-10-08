@@ -83,14 +83,14 @@ function normalize_settings( $value ) {
 	foreach ( $locales as $locale ) {
 		$languages[ $locale ] = array(
 			'locale' => $locale,
-			'name'   => $names[ $locale ] ?? $locale,
+			'name'   => $names[ $locale ] ?? native_name( $locale ),
 			'prefix' => $prefixes[ $locale ],
 		);
 	}
 
 	return array(
 		'base'      => $base,
-		'base_name' => $names[ $base ] ?? $base,
+		'base_name' => $names[ $base ] ?? native_name( $base ),
 		'confirmed' => ! empty( $value['confirmed'] ),
 		'threshold' => isset( $value['threshold'] ) && is_numeric( $value['threshold'] ) ? max( 0, min( 100, (int) $value['threshold'] ) ) : 100,
 		'keep'      => array_values( array_unique( array_filter( array_map( fn( $line ) => normalize( sanitize_text_field( (string) $line ) ), (array) ( $value['keep'] ?? array() ) ) ) ) ),
@@ -121,13 +121,25 @@ function locales() {
 }
 
 /**
- * Native name of a locale as stored in the settings.
+ * Native name of a locale when the settings have none (languages set from code or WP-CLI): from the
+ * WordPress.org list WordPress keeps after installing languages, never fetched here.
+ *
+ * @param string $locale Locale.
+ */
+function native_name( $locale ) {
+	$data  = json_decode( (string) file_get_contents( dirname( FILE ) . '/data/common-languages.json' ), true );
+	$known = (array) get_site_transient( 'available_translations' ) + (array) ( $data['builtin'] ?? array() );
+	return is_array( $known[ $locale ] ?? null ) && ! empty( $known[ $locale ]['native_name'] ) ? sanitize_text_field( $known[ $locale ]['native_name'] ) : $locale;
+}
+
+/**
+ * Display name of a locale from the settings.
  *
  * @param string $locale Locale.
  */
 function language_name( $locale ) {
 	$settings = settings();
-	return $settings['names'][ $locale ] ?? $locale;
+	return $settings['names'][ $locale ] ?? native_name( $locale );
 }
 
 /**

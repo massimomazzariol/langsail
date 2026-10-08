@@ -27,7 +27,7 @@ namespace LangSail;
 
 defined( 'ABSPATH' ) || exit;
 
-add_filter( 'langsail_translate', __NAMESPACE__ . '\\translate', 10, 1 );
+add_filter( 'langsail_translate', __NAMESPACE__ . '\\translate_string', 10, 1 );
 add_filter( 'langsail_translate_html', __NAMESPACE__ . '\\translate_markup', 10, 1 );
 add_filter( 'langsail_languages', __NAMESPACE__ . '\\api_languages' );
 add_filter( 'langsail_get_translation', __NAMESPACE__ . '\\api_get_translation', 10, 3 );
@@ -39,7 +39,7 @@ add_action( 'langsail_set_translation', __NAMESPACE__ . '\\api_set_translation',
  * @param mixed $text Text.
  * @return mixed The translation, or the text.
  */
-function translate( $text ) {
+function translate_string( $text ) {
 	if ( ! is_string( $text ) || '' === trim( $text ) || ! has_words( $text ) ) {
 		return $text;
 	}
