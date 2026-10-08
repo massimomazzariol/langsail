@@ -31,10 +31,6 @@
 	gap: 0.5em;
 }
 
-.langsail-view a {
-	margin-left: 0.5em;
-}
-
 .langsail-table th,
 .langsail-table td {
 	vertical-align: top;
@@ -76,11 +72,46 @@
 	vertical-align: -0.25em;
 }
 
+.langsail-pages,
 .langsail-transfer {
 	margin: 1em 0;
 }
 
+.langsail-pages summary,
 .langsail-transfer summary {
 	cursor: pointer;
 	font-weight: 600;
+}
+
+.langsail-pages-table {
+	margin-top: 0.5em;
+}
+
+.langsail-page-name {
+	font-weight: 600;
+}
+
+.langsail-pages-table code {
+	display: block;
+	width: fit-content;
+	margin-top: 0.25em;
+	font-size: 0.85em;
+}
+
+.langsail-pages-table td.is-missing a:not(.langsail-open) {
+	color: var(--langsail-missing);
+	font-weight: 600;
+}
+
+.langsail-pages-table td.is-done span {
+	color: var(--langsail-muted);
+}
+
+.langsail-open {
+	display: block;
+	margin-top: 0.25em;
+}
+
+.langsail-slugs input {
+	width: 100%;
 }

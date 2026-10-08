@@ -1,0 +1,4 @@
+{
+	"description": "Elements with one of these classes are never translated or collected: the HTML opt-out class and hidden anti-spam fields whose label changes on every page load.",
+	"classes": [ "notranslate", "ff-hpsf-container" ]
+}

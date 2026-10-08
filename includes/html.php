@@ -6,8 +6,9 @@
  * so a paragraph with a link or a bold word is translated as one sentence. Attribute units are the
  * human-readable attributes (alt, title, placeholder, aria-label, button values, SEO meta). Nothing
  * outside the units is touched: the rest of the page stays byte for byte as WordPress rendered it.
- * Contents of script, style, svg, pre, textarea and elements marked translate="no" or class
- * "notranslate" are never translated (HTML standard opt-out).
+ * Contents of script, style, svg, pre, textarea and elements marked translate="no" or with a class
+ * of data/skip-classes.json ("notranslate", the HTML opt-out, and hidden anti-spam fields) are never
+ * translated.
  *
  * @package LangSail
  */
@@ -83,8 +84,8 @@ function tokens( $html ) {
 			$pos      = $close[0][1];
 			continue;
 		}
-		$class   = ' ' . ( $attrs['class']['value'] ?? '' ) . ' ';
-		$stack[] = array( $name, 'no' === strtolower( $attrs['translate']['value'] ?? '' ) || str_contains( $class, ' notranslate ' ) );
+		$classes = preg_split( '/\s+/', $attrs['class']['value'] ?? '', -1, PREG_SPLIT_NO_EMPTY );
+		$stack[] = array( $name, 'no' === strtolower( $attrs['translate']['value'] ?? '' ) || (bool) array_intersect( $classes, skip_classes() ) );
 	}
 	if ( $pos < strlen( $html ) ) {
 		$tokens[] = array( 'type' => 'text', 'start' => $pos, 'end' => strlen( $html ), 'skip' => in_array( true, array_column( $stack, 1 ), true ) );
@@ -502,4 +503,19 @@ function units( $html ) {
 	translate_text( $html, $record );
 	translate_tags( $html, $record );
 	return $found;
+}
+
+/**
+ * Classes whose elements are never translated: data/skip-classes.json, extended by the
+ * langsail_skip_classes filter.
+ *
+ * @return string[]
+ */
+function skip_classes() {
+	static $classes = null;
+	if ( null === $classes ) {
+		$data    = json_decode( (string) file_get_contents( dirname( FILE ) . '/data/skip-classes.json' ), true );
+		$classes = array_values( array_filter( (array) apply_filters( 'langsail_skip_classes', (array) ( $data['classes'] ?? array() ) ), 'is_string' ) );
+	}
+	return $classes;
 }

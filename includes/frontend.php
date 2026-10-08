@@ -24,7 +24,7 @@ function is_scan() {
 	static $scan = null;
 	if ( null === $scan ) {
 		$nonce = isset( $_GET[ SCAN_ARG ] ) ? sanitize_text_field( wp_unslash( $_GET[ SCAN_ARG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Verified below.
-		$scan  = '' !== $nonce && ! is_translated_request() && current_user_can( 'manage_options' ) && wp_verify_nonce( $nonce, 'langsail_scan' );
+		$scan  = '' !== $nonce && ! is_translated_request() && ( is_scan_token( $nonce ) || ( can_translate() && wp_verify_nonce( $nonce, 'langsail_scan' ) ) );
 	}
 	return $scan;
 }

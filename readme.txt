@@ -23,8 +23,12 @@ LangSail keeps a single version of every page, template and menu, written in the
 * hreflang alternates, localized canonical and internal links
 * Language switcher block
 * Opt out with translate="no" or the notranslate class
+* Optional translated address words (/it/privacy/)
+* AI ready: Abilities API (REST, MCP) to list texts, save translations and scan; no external service is called
+* Translator role; WP-CLI commands (scan, stats, export, import, cleanup)
+* Import and export: JSON for moving between sites, PO for translators
 
 == Changelog ==
 
 = 0.1.0 =
-* First version: base language and translation languages, URL prefixes, text units and markers, translation table with scan, page translation, hreflang, language switcher block.
+* First version: base language and translation languages, URL prefixes, text units and markers, translation table with scan and pages overview, page translation, hreflang, language switcher block, translated addresses, AI abilities, Translator role, Italian interface.

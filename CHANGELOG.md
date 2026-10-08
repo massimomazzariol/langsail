@@ -23,3 +23,11 @@
 - Edited texts inherit the translations of the most similar text they replaced on the page, marked to review (data/similarity.json).
 - Saving in the block or site editor scans the page (templates, parts, menus and patterns: every page).
 - Remove texts no longer on any page (button and wp langsail cleanup).
+- Pages overview on the Translations screen: every page with its title, texts missing per language (a link to exactly those texts) and a link to the page in each language.
+- Filters: one language at a time (only its column), "missing" and "to review" per language.
+- Translated address words per language (optional), mapped back on requests; original words keep working.
+- AI abilities (Abilities API, REST and MCP Adapter): list-languages, list-texts, save-translations, scan. No external service is called.
+- Translator role and langsail_translate capability; settings stay with administrators.
+- Scans without a browser: wp langsail scan and the scan ability use a short-lived token.
+- Hidden anti-spam fields (Fluent Forms honeypot, whose label changes on every load) are never collected (data/skip-classes.json, filter langsail_skip_classes).
+- Italian translation of the interface.

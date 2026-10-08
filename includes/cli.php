@@ -74,6 +74,17 @@ class CLI {
 	}
 
 	/**
+	 * Scan every page of the site for new texts.
+	 */
+	public function scan() {
+		$result = scan_site();
+		foreach ( $result['failed'] as $url ) {
+			\WP_CLI::warning( "Could not scan $url" );
+		}
+		\WP_CLI::success( sprintf( 'Scanned %d pages, %d new texts.', $result['pages'], $result['new'] ) );
+	}
+
+	/**
 	 * Delete the texts that are on no page any more, with their translations.
 	 */
 	public function cleanup() {

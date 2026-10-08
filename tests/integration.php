@@ -14,6 +14,7 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 }
 
 $langsail_old    = get_option( OPTION, null );
+$langsail_slugs  = get_option( SLUGS_OPTION, null );
 $langsail_passes = 0;
 $check           = static function ( $condition, $description ) use ( &$langsail_passes ) {
 	if ( ! $condition ) {
@@ -196,13 +197,50 @@ try {
 	record_page( $page, array( 'LangSail test sentence one, edited.' => 'text' ) );
 	$edited = current( query_strings( array( 'page' => $page, 'locales' => array( 'it_IT' ) ) )['rows'] );
 	$check( 'LangSail test sentence one, edited.' === $edited['source'] && 'review' === ( $edited['translations']['it_IT']['status'] ?? '' ) && '' !== ( $edited['translations']['it_IT']['text'] ?? '' ), 'An edited text inherits the old translations, marked to review' );
+	$check( in_array( $edited['id'], array_column( query_strings( array( 'status' => 'review', 'locales' => array( 'it_IT' ), 'per_page' => 500 ) )['rows'], 'id' ), true ), 'The "to review" filter finds texts to check in one language' );
 	record_page( $page, array( 'Something completely different here.' => 'text' ) );
 	$other = current( query_strings( array( 'page' => $page, 'locales' => array( 'it_IT' ) ) )['rows'] );
 	$check( array() === $other['translations'], 'A text unlike the one it replaced starts untranslated' );
-	$check( remove_unused() >= 2 && ! dictionary( 'it_IT' )[ md5( 'LangSail test sentence one.' ) ], 'Texts on no page are removed with their translations' );
+	$check( 1 === query_strings( array( 'page' => $page, 'status' => 'missing', 'locales' => array( 'es_ES' ), 'offset' => 0 ) )['total'], 'The "missing" filter works for a single language' );
+	$rebuilt = rebuild_translations( array( $other['id'] => 'Qualcosa [1]di[/1] diverso.', 999999999 => 'x' ) );
+	$check( isset( $rebuilt['errors'][ $other['id'] ], $rebuilt['errors'][999999999] ) && ! $rebuilt['clean'], 'Translations with markers the source lacks, or for unknown texts, are rejected' );
+
+	$honeypot = units( '<form><div class="ff-el-group ff-hpsf-container"><label>Newsletter</label></div><p class="x notranslate">Brand</p><label>Your name</label></form>' );
+	$check( array( 'Your name' ) === array_keys( $honeypot ), 'Hidden anti-spam fields and notranslate elements are not collected' );
+
+	// AI abilities and scans without a browser.
+	if ( function_exists( 'wp_get_ability' ) ) {
+		$admins = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
+		wp_set_current_user( (int) $admins[0] );
+		$listed = wp_get_ability( 'langsail/list-texts' )->execute( array( 'locale' => 'it_IT', 'page' => $page, 'status' => 'all' ) );
+		$check( 1 === $listed['total'] && 'Something completely different here.' === $listed['texts'][0]['source'] && 'missing' === $listed['texts'][0]['status'], 'The list-texts ability returns the texts of a page in one language' );
+		$saved = wp_get_ability( 'langsail/save-translations' )->execute( array( 'locale' => 'it_IT', 'translations' => array( array( 'id' => (int) $other['id'], 'translation' => 'Qualcosa di completamente diverso.' ) ) ) );
+		$check( 1 === $saved['saved'] && 'Qualcosa di completamente diverso.' === dictionary( 'it_IT' )[ md5( 'Something completely different here.' ) ], 'The save-translations ability stores a translation' );
+		$check( is_wp_error( wp_get_ability( 'langsail/list-texts' )->execute( array( 'locale' => 'xx_XX' ) ) ), 'Abilities refuse languages the site does not use' );
+		wp_set_current_user( 0 );
+		$check( is_wp_error( wp_get_ability( 'langsail/list-languages' )->execute() ), 'Abilities need the translate capability' );
+	}
+	ensure_roles();
+	$check( get_role( TRANSLATOR ) && get_role( TRANSLATOR )->has_cap( CAP_TRANSLATE ) && ! get_role( TRANSLATOR )->has_cap( 'manage_options' ), 'The Translator role can translate and nothing more' );
+	$token = scan_token();
+	$check( is_scan_token( $token ) && ! is_scan_token( '' ) && ! is_scan_token( 'x' . $token ), 'Scan tokens are checked exactly' );
+	delete_transient( SCAN_TOKEN );
+
+	// Translated addresses.
+	update_option( SLUGS_OPTION, array( 'it_IT' => array( 'privacy-policy' => 'privacy', 'about' => 'chi-siamo' ) ) );
+	$check( home_url( '/it/privacy/?a=1' ) === localize_url( home_url( '/privacy-policy/?a=1' ), 'it_IT' ) && home_url( '/es/privacy-policy/' ) === localize_url( home_url( '/privacy-policy/' ), 'es_ES' ), 'Links use the translated words of the address in that language only' );
+	$check( $home . 'privacy-policy/?a=1' === language_from_uri( $home . 'it/privacy/?a=1' )['uri'] && $home . 'privacy-policy/' === language_from_uri( $home . 'it/privacy-policy/' )['uri'], 'Translated and original words both lead to the page' );
+	$privacy = url_to_postid( home_url( '/privacy-policy/' ) );
+	if ( $privacy ) {
+		$response = wp_remote_get( home_url( '/it/privacy/' ), $http );
+		$check( 200 === wp_remote_retrieve_response_code( $response ) && str_contains( wp_remote_retrieve_body( $response ), 'hreflang="it"' ), 'A page answers at its translated address' );
+	}
+
+	$check( remove_unused() >= 2 && ! isset( dictionary( 'it_IT' )[ md5( 'LangSail test sentence one.' ) ] ), 'Texts on no page are removed with their translations' );
 
 	\WP_CLI::success( $langsail_passes . ' integration checks passed on WordPress ' . get_bloginfo( 'version' ) . ' / PHP ' . PHP_VERSION );
 } finally {
 	$cleanup();
 	null === $langsail_old ? delete_option( OPTION ) : update_option( OPTION, $langsail_old );
+	null === $langsail_slugs ? delete_option( SLUGS_OPTION ) : update_option( SLUGS_OPTION, $langsail_slugs );
 }

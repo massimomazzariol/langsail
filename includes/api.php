@@ -163,7 +163,7 @@ function api_get_translation( $default, $source, $locale ) {
  * @param mixed  $translation Translation.
  */
 function api_set_translation( $source, $locale, $translation ) {
-	if ( ! is_string( $source ) || '' === trim( $source ) || ! isset( settings()['languages'][ $locale ] ) || ! current_user_can( 'manage_options' ) ) {
+	if ( ! is_string( $source ) || '' === trim( $source ) || ! isset( settings()['languages'][ $locale ] ) || ! can_translate() ) {
 		return;
 	}
 	$id = ensure_string( normalize( $source ), 'attr', array() );

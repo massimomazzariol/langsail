@@ -15,8 +15,10 @@ add_action( 'admin_notices', __NAMESPACE__ . '\\confirm_notice' );
 
 /** LangSail menu: Translations (the table) and Settings. */
 function admin_menu() {
-	add_menu_page( __( 'LangSail', 'langsail' ), __( 'LangSail', 'langsail' ), 'manage_options', 'langsail', __NAMESPACE__ . '\\strings_page', 'dashicons-translation', 81 );
-	add_submenu_page( 'langsail', __( 'Translations', 'langsail' ), __( 'Translations', 'langsail' ), 'manage_options', 'langsail', __NAMESPACE__ . '\\strings_page' );
+	// Administrators always; translators through their capability.
+	$cap = current_user_can( 'manage_options' ) ? 'manage_options' : CAP_TRANSLATE;
+	add_menu_page( __( 'LangSail', 'langsail' ), __( 'LangSail', 'langsail' ), $cap, 'langsail', __NAMESPACE__ . '\\strings_page', 'dashicons-translation', 81 );
+	add_submenu_page( 'langsail', __( 'Translations', 'langsail' ), __( 'Translations', 'langsail' ), $cap, 'langsail', __NAMESPACE__ . '\\strings_page' );
 	add_submenu_page( 'langsail', __( 'LangSail settings', 'langsail' ), __( 'Settings', 'langsail' ), 'manage_options', 'langsail-settings', __NAMESPACE__ . '\\settings_page' );
 }
 

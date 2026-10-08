@@ -92,7 +92,7 @@ function language_from_uri( $uri ) {
 		if ( $rest === $prefix || str_starts_with( $rest, $prefix . '/' ) || str_starts_with( $rest, $prefix . '?' ) ) {
 			return array(
 				'locale' => $locale,
-				'uri'    => $home . ltrim( substr( $rest, strlen( $prefix ) ), '/' ),
+				'uri'    => map_slugs( $home . ltrim( substr( $rest, strlen( $prefix ) ), '/' ), $locale, true ),
 			);
 		}
 	}
@@ -141,7 +141,7 @@ function localize_url( $url, $locale ) {
 	if ( preg_match( '#^(?:wp-admin|wp-login\.php|wp-json|wp-content|wp-includes|xmlrpc\.php|feed)(?:/|$)#', $rest ) || preg_match( '#\.[a-z0-9]{2,5}$#i', $rest ) || null !== language_from_uri( $base . $rest ) ) {
 		return $url;
 	}
-	$localized = rtrim( $base, '/' ) . '/' . $languages[ $locale ]['prefix'] . '/' . $rest;
+	$localized = rtrim( $base, '/' ) . '/' . $languages[ $locale ]['prefix'] . '/' . map_slugs( $rest, $locale );
 	$origin    = isset( $parts['host'] ) ? ( isset( $parts['scheme'] ) ? $parts['scheme'] . ':' : '' ) . '//' . $parts['host'] . ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' ) : '';
 	return $origin . $localized . ( isset( $parts['query'] ) ? '?' . $parts['query'] : '' ) . ( isset( $parts['fragment'] ) ? '#' . $parts['fragment'] : '' );
 }

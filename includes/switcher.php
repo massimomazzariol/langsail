@@ -14,6 +14,7 @@ add_action( 'init', __NAMESPACE__ . '\\register_switcher' );
 /** Register the dynamic block. */
 function register_switcher() {
 	register_block_type( dirname( FILE ) . '/blocks/switcher' );
+	wp_set_script_translations( generate_block_asset_handle( 'langsail/switcher', 'editorScript' ), 'langsail', dirname( FILE ) . '/languages' );
 }
 
 /**

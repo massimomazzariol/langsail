@@ -57,7 +57,7 @@ function strings_assets( $hook ) {
 
 /** Scan after saving in the block and site editors, so new texts reach the table without a click. */
 function editor_scan_assets() {
-	if ( ! current_user_can( 'manage_options' ) || ! settings()['languages'] ) {
+	if ( ! can_translate() || ! settings()['languages'] ) {
 		return;
 	}
 	wp_enqueue_script( 'langsail-editor-scan', plugins_url( 'assets/editor-scan.js', FILE ), array( 'wp-data' ), VERSION, array( 'in_footer' => true ) );
@@ -73,40 +73,17 @@ function editor_scan_assets() {
 		'before'
 	);
 }
-/** Addresses to scan: the home page and every published page and post of a public type. */
-function scan_urls() {
-	$urls  = array( home_url( '/' ) );
-	$types = array_values( get_post_types( array( 'public' => true ) ) );
-	$types = array_diff( $types, array( 'attachment' ) );
-	$ids   = get_posts(
-		array(
-			'post_type'      => $types,
-			'post_status'    => 'publish',
-			'posts_per_page' => 500,
-			'fields'         => 'ids',
-			'orderby'        => 'menu_order title',
-			'order'          => 'ASC',
-		)
-	);
-	foreach ( $ids as $id ) {
-		$urls[] = get_permalink( $id );
-	}
-	// The "not found" page and the search results have texts of their own.
-	$urls[] = home_url( '/langsail-scan-not-found/' );
-	$urls[] = add_query_arg( 's', 'langsail', home_url( '/' ) );
-	return array_values( array_unique( $urls ) );
-}
-
 /**
  * Current filters from the query string.
  *
- * @return array{page: string, status: string, search: string, paged: int}
+ * @return array{page: string, status: string, language: string, search: string, paged: int}
  */
 function table_filters() {
 	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only filters.
 	return array(
 		'page'   => isset( $_GET['ls_page'] ) ? sanitize_text_field( wp_unslash( $_GET['ls_page'] ) ) : '',
-		'status' => isset( $_GET['ls_status'] ) && 'missing' === $_GET['ls_status'] ? 'missing' : '',
+		'status'   => isset( $_GET['ls_status'] ) && in_array( $_GET['ls_status'], array( 'missing', 'review' ), true ) ? sanitize_key( $_GET['ls_status'] ) : '',
+		'language' => isset( $_GET['ls_language'] ) && isset( settings()['languages'][ $_GET['ls_language'] ] ) ? sanitize_text_field( wp_unslash( $_GET['ls_language'] ) ) : '',
 		'search' => isset( $_GET['ls_search'] ) ? sanitize_text_field( wp_unslash( $_GET['ls_search'] ) ) : '',
 		'paged'  => max( 1, isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1 ),
 	);
@@ -115,13 +92,14 @@ function table_filters() {
 
 /** The Translations screen. */
 function strings_page() {
-	if ( ! current_user_can( 'manage_options' ) ) {
+	if ( ! can_translate() ) {
 		return;
 	}
 	$settings  = settings();
 	$languages = $settings['languages'];
 	$filters   = table_filters();
-	$result    = query_strings( $filters + array( 'locales' => array_keys( $languages ), 'per_page' => PER_PAGE ) );
+	$columns   = '' === $filters['language'] ? $languages : array( $filters['language'] => $languages[ $filters['language'] ] );
+	$result    = query_strings( $filters + array( 'locales' => array_keys( $columns ), 'per_page' => PER_PAGE ) );
 	$progress  = progress( array_keys( $languages ) );
 	$pages     = pages();
 	?>
@@ -209,7 +187,11 @@ function strings_page() {
 			</form>
 		</details>
 
-		<form method="get" class="langsail-filters">
+		<?php slugs_form( $languages ); ?>
+
+		<?php pages_overview( $languages, $filters ); ?>
+
+		<form method="get" class="langsail-filters" id="langsail-texts">
 			<input type="hidden" name="page" value="langsail">
 			<label for="langsail-filter-page"><?php esc_html_e( 'Page', 'langsail' ); ?></label>
 			<select id="langsail-filter-page" name="ls_page">
@@ -222,17 +204,18 @@ function strings_page() {
 			<select id="langsail-filter-status" name="ls_status">
 				<option value=""><?php esc_html_e( 'All texts', 'langsail' ); ?></option>
 				<option value="missing" <?php selected( $filters['status'], 'missing' ); ?>><?php esc_html_e( 'Missing a translation', 'langsail' ); ?></option>
+				<option value="review" <?php selected( $filters['status'], 'review' ); ?>><?php esc_html_e( 'To review', 'langsail' ); ?></option>
+			</select>
+			<label for="langsail-filter-language"><?php esc_html_e( 'Language', 'langsail' ); ?></label>
+			<select id="langsail-filter-language" name="ls_language">
+				<option value=""><?php esc_html_e( 'All languages', 'langsail' ); ?></option>
+				<?php foreach ( $languages as $locale => $language ) : ?>
+					<option value="<?php echo esc_attr( $locale ); ?>" <?php selected( $filters['language'], $locale ); ?>><?php echo esc_html( $language['name'] ); ?></option>
+				<?php endforeach; ?>
 			</select>
 			<label for="langsail-filter-search"><?php esc_html_e( 'Search', 'langsail' ); ?></label>
 			<input type="search" id="langsail-filter-search" name="ls_search" value="<?php echo esc_attr( $filters['search'] ); ?>">
 			<?php submit_button( __( 'Filter', 'langsail' ), 'secondary', '', false ); ?>
-			<?php if ( '' !== $filters['page'] ) : ?>
-				<span class="langsail-view"><?php esc_html_e( 'View this page:', 'langsail' ); ?>
-					<?php foreach ( $languages as $locale => $language ) : ?>
-						<a href="<?php echo esc_url( localize_url( home_url( $filters['page'] ), $locale ) ); ?>" target="_blank" rel="noopener"><?php echo flag_img( $locale ) . ' ' . esc_html( $language['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag_img() escapes. ?></a>
-					<?php endforeach; ?>
-				</span>
-			<?php endif; ?>
 		</form>
 
 		<?php if ( ! $result['rows'] ) : ?>
@@ -246,7 +229,7 @@ function strings_page() {
 				<table class="widefat striped langsail-table">
 					<thead><tr>
 						<th scope="col"><?php echo flag_img( $settings['base'] ) . ' ' . esc_html( $settings['base_name'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag_img() escapes. ?></th>
-						<?php foreach ( $languages as $language ) : ?>
+						<?php foreach ( $columns as $language ) : ?>
 							<th scope="col"><?php echo flag_img( $language['locale'] ) . ' ' . esc_html( $language['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag_img() escapes. ?></th>
 						<?php endforeach; ?>
 					</tr></thead>
@@ -259,7 +242,7 @@ function strings_page() {
 										<span class="langsail-kind"><?php echo esc_html( 'title' === $row['kind'] ? __( 'page title', 'langsail' ) : __( 'attribute', 'langsail' ) ); ?></span>
 									<?php endif; ?>
 								</th>
-								<?php foreach ( $languages as $locale => $language ) : ?>
+								<?php foreach ( $columns as $locale => $language ) : ?>
 									<?php $tr = $row['translations'][ $locale ] ?? null; ?>
 									<td class="<?php echo esc_attr( $tr ? 'is-' . $tr['status'] : 'is-missing' ); ?>">
 										<label class="screen-reader-text" for="<?php echo esc_attr( "ls-{$row['id']}-{$locale}" ); ?>">
@@ -301,43 +284,22 @@ function strings_page() {
 
 /** Save the submitted translations, rebuilding text units from their markers. */
 function save_strings() {
-	if ( ! current_user_can( 'manage_options' ) ) {
+	if ( ! can_translate() ) {
 		wp_die( esc_html__( 'You are not allowed to edit translations.', 'langsail' ), 403 );
 	}
 	check_admin_referer( 'langsail_translations' );
-	global $wpdb;
 	$languages = settings()['languages'];
-	$submitted = isset( $_POST['tr'] ) && is_array( $_POST['tr'] ) ? wp_unslash( $_POST['tr'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Rebuilt from markers or escaped below.
-	$ids       = array();
-	foreach ( $submitted as $texts ) {
-		$ids = array_merge( $ids, array_map( 'absint', array_keys( (array) $texts ) ) );
-	}
-	$ids     = array_filter( array_unique( $ids ) );
-	$strings = $ids ? array_column( $wpdb->get_results( 'SELECT id, kind, source FROM ' . tables()['strings'] . ' WHERE id IN (' . implode( ',', $ids ) . ')', ARRAY_A ), null, 'id' ) : array(); // phpcs:ignore WordPress.DB.PreparedSQL -- Integers.
-	$errors  = array();
+	$submitted = isset( $_POST['tr'] ) && is_array( $_POST['tr'] ) ? wp_unslash( $_POST['tr'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Rebuilt from markers or escaped by rebuild_translations().
+	$errors    = array();
 	foreach ( $submitted as $locale => $texts ) {
 		if ( ! isset( $languages[ $locale ] ) || ! is_array( $texts ) ) {
 			continue;
 		}
-		$clean = array();
-		foreach ( $texts as $id => $text ) {
-			$string = $strings[ absint( $id ) ] ?? null;
-			if ( ! $string || ! is_string( $text ) ) {
-				continue;
-			}
-			$text = trim( $text );
-			if ( '' === $text || 'text' !== $string['kind'] ) {
-				$clean[ $string['id'] ] = sanitize_text_field( $text ); // Plain text: escaped where it is output.
-				continue;
-			}
-			$html = from_placeholders( $text, $string['source'] );
-			if ( is_wp_error( $html ) ) {
-				$errors[] = sprintf( '%s (%s): %s', wp_html_excerpt( to_placeholders( $string['source'] )['text'], 60, '...' ), $languages[ $locale ]['name'], $html->get_error_message() );
-				continue;
-			}
-			$clean[ $string['id'] ] = $html;
+		$result = rebuild_translations( $texts );
+		foreach ( $result['errors'] as $error ) {
+			$errors[] = sprintf( '%s (%s)', $error, $languages[ $locale ]['name'] );
 		}
-		save_translations( $locale, $clean );
+		save_translations( $locale, $result['clean'] );
 	}
 	if ( $errors ) {
 		set_transient( 'langsail_errors_' . get_current_user_id(), $errors, HOUR_IN_SECONDS );
@@ -349,7 +311,7 @@ function save_strings() {
 
 /** Send an export file: every language as JSON, or one language as PO. */
 function download_export() {
-	if ( ! current_user_can( 'manage_options' ) ) {
+	if ( ! can_translate() ) {
 		wp_die( esc_html__( 'You are not allowed to export translations.', 'langsail' ), 403 );
 	}
 	check_admin_referer( 'langsail_export' );
@@ -377,7 +339,7 @@ function download_export() {
 
 /** Import an uploaded .json export or .po file. */
 function upload_import() {
-	if ( ! current_user_can( 'manage_options' ) ) {
+	if ( ! can_translate() ) {
 		wp_die( esc_html__( 'You are not allowed to import translations.', 'langsail' ), 403 );
 	}
 	check_admin_referer( 'langsail_import' );
@@ -411,4 +373,108 @@ function cleanup_unused() {
 	set_transient( 'langsail_imported_' . get_current_user_id(), sprintf( _n( '%d unused text removed.', '%d unused texts removed.', $removed, 'langsail' ), $removed ), HOUR_IN_SECONDS );
 	wp_safe_redirect( admin_url( 'admin.php?page=langsail' ) );
 	exit;
+}
+
+/**
+ * A readable name for a page key: the post title, or the path.
+ *
+ * @param string $page Page key.
+ */
+function page_label( $page ) {
+	$labels = array(
+		'/'        => __( 'Home page', 'langsail' ),
+		'(404)'    => __( 'Page not found (404)', 'langsail' ),
+		'(search)' => __( 'Search results', 'langsail' ),
+	);
+	if ( isset( $labels[ $page ] ) ) {
+		return $labels[ $page ];
+	}
+	$id = url_to_postid( home_url( $page ) );
+	return $id ? get_the_title( $id ) : $page;
+}
+
+/**
+ * Where a page key can be opened in a language, or '' for pages without an address of their own.
+ *
+ * @param string $page   Page key.
+ * @param string $locale Locale.
+ */
+function page_url( $page, $locale ) {
+	if ( '(search)' === $page ) {
+		return localize_url( home_url( '/?s=' ), $locale );
+	}
+	return '/' === substr( $page, 0, 1 ) ? localize_url( home_url( $page ), $locale ) : '';
+}
+
+/**
+ * Every scanned page with what is missing in each language (a link to exactly those texts) and a
+ * link to see the page in that language. With a page chosen, only that page.
+ *
+ * @param array $languages Translation languages.
+ * @param array $filters   Table filters.
+ */
+function pages_overview( array $languages, array $filters ) {
+	$pages = pages();
+	if ( '' !== $filters['page'] ) {
+		$pages = array_intersect_key( $pages, array( $filters['page'] => true ) );
+	}
+	if ( ! $pages ) {
+		return;
+	}
+	$base = admin_url( 'admin.php?page=langsail' );
+	?>
+	<details class="langsail-pages" open>
+		<summary><?php esc_html_e( 'Pages', 'langsail' ); ?></summary>
+		<table class="widefat striped langsail-pages-table">
+			<thead><tr>
+				<th scope="col"><?php esc_html_e( 'Page', 'langsail' ); ?></th>
+				<th scope="col"><?php esc_html_e( 'Texts', 'langsail' ); ?></th>
+				<?php foreach ( $languages as $locale => $language ) : ?>
+					<th scope="col"><?php echo flag_img( $locale ) . ' ' . esc_html( $language['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag_img() escapes. ?></th>
+				<?php endforeach; ?>
+			</tr></thead>
+			<tbody>
+				<?php foreach ( $pages as $page => $count ) : ?>
+					<?php $done = page_progress( $page )['done']; ?>
+					<tr>
+						<th scope="row">
+							<a class="langsail-page-name" href="<?php echo esc_url( add_query_arg( 'ls_page', rawurlencode( $page ), $base ) . '#langsail-texts' ); ?>"><?php echo esc_html( page_label( $page ) ); ?></a>
+							<code><?php echo esc_html( $page ); ?></code>
+						</th>
+						<td><?php echo esc_html( (string) $count ); ?></td>
+						<?php foreach ( $languages as $locale => $language ) : ?>
+							<?php
+							$missing = $count - ( $done[ $locale ] ?? 0 );
+							$url     = page_url( $page, $locale );
+							?>
+							<td class="<?php echo esc_attr( $missing > 0 ? 'is-missing' : 'is-done' ); ?>">
+								<?php if ( $missing > 0 ) : ?>
+									<a href="<?php echo esc_url( add_query_arg( array( 'ls_page' => rawurlencode( $page ), 'ls_language' => rawurlencode( $locale ), 'ls_status' => 'missing' ), $base ) . '#langsail-texts' ); ?>">
+										<?php
+										/* translators: %d: number of texts without a translation. */
+										echo esc_html( sprintf( _n( '%d missing', '%d missing', $missing, 'langsail' ), $missing ) );
+										?>
+									</a>
+								<?php else : ?>
+									<span><?php esc_html_e( 'Translated', 'langsail' ); ?></span>
+								<?php endif; ?>
+								<?php if ( '' !== $url ) : ?>
+									<a class="langsail-open" href="<?php echo esc_url( $url ); ?>" target="_blank" rel="noopener">
+										<?php
+										/* translators: %s: language name. */
+										echo esc_html( sprintf( __( 'View in %s', 'langsail' ), $language['name'] ) );
+										?>
+									</a>
+								<?php endif; ?>
+							</td>
+						<?php endforeach; ?>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		<?php if ( '' !== $filters['page'] ) : ?>
+			<p><a href="<?php echo esc_url( $base ); ?>"><?php esc_html_e( 'All pages', 'langsail' ); ?></a></p>
+		<?php endif; ?>
+	</details>
+	<?php
 }

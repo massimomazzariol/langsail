@@ -205,6 +205,8 @@ function pages() {
 	}
 	$t     = tables();
 	$found = array_map( 'intval', array_column( $wpdb->get_results( "SELECT page, COUNT(*) AS n FROM {$t['pages']} GROUP BY page ORDER BY page", ARRAY_A ), 'n', 'page' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- Table name, cached.
+	// Real addresses first (home page on top), then the special keys like (404).
+	uksort( $found, static fn( $a, $b ) => array( '/' !== $a[0], $a ) <=> array( '/' !== $b[0], $b ) );
 	wp_cache_set( 'pages', $found, 'langsail' );
 	return $found;
 }
@@ -212,7 +214,7 @@ function pages() {
 /**
  * Strings for the translation table, with their translations.
  *
- * @param array $args page, search, status ('missing' in any language, or ''), locales, per_page, paged.
+ * @param array $args page, search, status ('missing' or 'review' in any of the locales, or ''), locales, per_page, paged or offset.
  * @return array{rows: array, total: int}
  */
 function query_strings( array $args ) {
@@ -239,10 +241,14 @@ function query_strings( array $args ) {
 		$where[]  = '(SELECT COUNT(*) FROM ' . $t['translations'] . ' t4 WHERE t4.string_id = s.id AND t4.status = \'translated\' AND t4.locale IN (' . implode( ',', array_fill( 0, count( $args['locales'] ), '%s' ) ) . ')) < %d';
 		$params   = array_merge( $params, $args['locales'], array( count( $args['locales'] ) ) );
 	}
+	if ( 'review' === ( $args['status'] ?? '' ) && $args['locales'] ) {
+		$where[] = 'EXISTS (SELECT 1 FROM ' . $t['translations'] . " t5 WHERE t5.string_id = s.id AND t5.status = 'review' AND t5.locale IN (" . implode( ',', array_fill( 0, count( $args['locales'] ), '%s' ) ) . '))';
+		$params  = array_merge( $params, $args['locales'] );
+	}
 	$sql   = "FROM {$t['strings']} s $join WHERE " . implode( ' AND ', $where );
 	$total = (int) $wpdb->get_var( $params ? $wpdb->prepare( "SELECT COUNT(*) $sql", $params ) : "SELECT COUNT(*) $sql" ); // phpcs:ignore WordPress.DB.PreparedSQL -- Built from placeholders above.
 	$limit = max( 1, (int) ( $args['per_page'] ?? 50 ) );
-	$skip  = $limit * max( 0, (int) ( $args['paged'] ?? 1 ) - 1 );
+	$skip  = isset( $args['offset'] ) ? max( 0, (int) $args['offset'] ) : $limit * max( 0, (int) ( $args['paged'] ?? 1 ) - 1 );
 	$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT s.id, s.source, s.kind $sql ORDER BY $order LIMIT %d OFFSET %d", array_merge( $params, array( $limit, $skip ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL -- Built from placeholders above.
 
 	$ids = array_map( 'intval', array_column( $rows, 'id' ) );

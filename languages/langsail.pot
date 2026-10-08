@@ -1,0 +1,514 @@
+# Copyright (C) 2026 Massimo Mazzariol
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: LangSail 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/langsail\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-10-08T17:46:48+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: langsail\n"
+
+#. Plugin Name of the plugin
+#: langsail.php
+#: includes/abilities.php:26
+#: includes/admin-settings.php:20
+msgid "LangSail"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: langsail.php
+msgid "https://github.com/massimomazzariol/langsail"
+msgstr ""
+
+#. Description of the plugin
+#: langsail.php
+msgid "Cookie-free multilingual sites with one structure: pages are built once in the base language and every text is translated from a table."
+msgstr ""
+
+#. Author of the plugin
+#: langsail.php
+msgid "Massimo Mazzariol"
+msgstr ""
+
+#. Author URI of the plugin
+#: langsail.php
+msgid "https://github.com/massimomazzariol"
+msgstr ""
+
+#: includes/abilities.php:27
+msgid "Site translation: languages, texts to translate and translations."
+msgstr ""
+
+#: includes/abilities.php:54
+msgid "Locale of a translation language, from langsail/list-languages."
+msgstr ""
+
+#: includes/abilities.php:60
+msgid "List languages"
+msgstr ""
+
+#: includes/abilities.php:61
+msgid "Lists the base language of the site and the translation languages, each with its locale, URL prefix and how many of the site texts are translated."
+msgstr ""
+
+#: includes/abilities.php:80
+msgid "List texts to translate"
+msgstr ""
+
+#: includes/abilities.php:81
+msgid "Lists texts of the site in the base language with their translation in one language. Markers like [1]...[/1] stand for links and formatting and [2/] for a line break: a translation must keep the same markers around the matching words. Kind \"attr\" and \"title\" are plain text. Translate with langsail/save-translations."
+msgstr ""
+
+#: includes/abilities.php:91
+msgid "missing: no translation yet; review: translation kept from an older version of the text, to check; all: every text."
+msgstr ""
+
+#: includes/abilities.php:96
+msgid "Only the texts of this page (its path, like /about/). Empty for every page."
+msgstr ""
+
+#: includes/abilities.php:145
+#: includes/admin-strings.php:261
+msgid "Save translations"
+msgstr ""
+
+#: includes/abilities.php:146
+msgid "Saves translations of texts from langsail/list-texts into one language. Each translation must keep the markers of its source. Translations with wrong markers are not saved and are returned as errors. Use status \"review\" to ask a person to check them."
+msgstr ""
+
+#: includes/abilities.php:194
+msgid "Scan the site"
+msgstr ""
+
+#: includes/abilities.php:195
+msgid "Visits every page of the site to collect new and changed texts. Run it after content changes, before listing the texts to translate. It can take a while on large sites."
+msgstr ""
+
+#: includes/abilities.php:220
+msgid "Not a translation language of this site. See langsail/list-languages."
+msgstr ""
+
+#: includes/admin-settings.php:21
+#: includes/admin-strings.php:107
+msgid "Translations"
+msgstr ""
+
+#: includes/admin-settings.php:22
+#: includes/admin-settings.php:68
+msgid "LangSail settings"
+msgstr ""
+
+#: includes/admin-settings.php:22
+msgid "Settings"
+msgstr ""
+
+#: includes/admin-settings.php:32
+msgid "LangSail: confirm the base language of the site before adding translations."
+msgstr ""
+
+#: includes/admin-settings.php:34
+#: includes/admin-strings.php:111
+msgid "Open the settings"
+msgstr ""
+
+#: includes/admin-settings.php:46
+msgid "Common languages"
+msgstr ""
+
+#: includes/admin-settings.php:47
+#: includes/admin-strings.php:211
+msgid "All languages"
+msgstr ""
+
+#: includes/admin-settings.php:70
+msgid "Settings saved. Language packs for the new languages were installed where available."
+msgstr ""
+
+#: includes/admin-settings.php:77
+msgid "Base language"
+msgstr ""
+
+#: includes/admin-settings.php:82
+msgid "The language the site is written in. Every page is built once in this language; the others are translations of its texts."
+msgstr ""
+
+#: includes/admin-settings.php:84
+msgid "I am changing the base language: existing translations will no longer match the texts."
+msgstr ""
+
+#: includes/admin-settings.php:89
+msgid "Translation languages"
+msgstr ""
+
+#: includes/admin-settings.php:94
+msgid "Hold Ctrl (Cmd on a Mac) to select more than one. Each language gets its own address prefix and the WordPress, theme and plugin translations are downloaded."
+msgstr ""
+
+#: includes/admin-settings.php:98
+msgid "Indexing"
+msgstr ""
+
+#: includes/admin-settings.php:101
+msgid "A language version of a page is offered to search engines (hreflang, sitemap) only when at least this share of its texts is translated; until then it is marked noindex."
+msgstr ""
+
+#: includes/admin-settings.php:105
+msgid "Never translate"
+msgstr ""
+
+#: includes/admin-settings.php:108
+msgid "One text per line: brand names, codes, addresses. A text exactly like one of these stays as it is in every language and is not listed in the translation table."
+msgstr ""
+
+#: includes/admin-settings.php:113
+msgid "Addresses"
+msgstr ""
+
+#: includes/admin-settings.php:123
+msgid "Save settings"
+msgstr ""
+
+#: includes/admin-settings.php:123
+msgid "Confirm and save"
+msgstr ""
+
+#: includes/admin-settings.php:132
+msgid "You are not allowed to change these settings."
+msgstr ""
+
+#. translators: 1: pages done, 2: pages in total.
+#: includes/admin-strings.php:46
+#, php-format
+msgid "Scanning page %1$d of %2$d..."
+msgstr ""
+
+#. translators: 1: pages scanned, 2: new texts found.
+#: includes/admin-strings.php:48
+#, php-format
+msgid "Scan complete: %1$d pages, %2$d new texts. Reloading..."
+msgstr ""
+
+#. translators: %s: page address.
+#: includes/admin-strings.php:50
+#, php-format
+msgid "Could not scan %s"
+msgstr ""
+
+#: includes/admin-strings.php:110
+msgid "Choose the translation languages first."
+msgstr ""
+
+#: includes/admin-strings.php:119
+msgid "Translations saved."
+msgstr ""
+
+#: includes/admin-strings.php:129
+msgid "These translations were not saved:"
+msgstr ""
+
+#. translators: %d: number of texts.
+#: includes/admin-strings.php:140
+#, php-format
+msgid "%d text on the site."
+msgid_plural "%d texts on the site."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/admin-strings.php:154
+msgid "Scan the site for new texts"
+msgstr ""
+
+#: includes/admin-strings.php:160
+msgid "Import and export"
+msgstr ""
+
+#: includes/admin-strings.php:162
+msgid "Export:"
+msgstr ""
+
+#: includes/admin-strings.php:163
+msgid "All languages (JSON)"
+msgstr ""
+
+#: includes/admin-strings.php:171
+msgid "File (.json or .po)"
+msgstr ""
+
+#: includes/admin-strings.php:173
+msgid "Language of a .po file or a map"
+msgstr ""
+
+#: includes/admin-strings.php:179
+msgid "Import"
+msgstr ""
+
+#: includes/admin-strings.php:181
+msgid "JSON carries every text and language, for moving translations between sites (local to live). PO holds one language for Poedit or a translator; fuzzy entries are imported as \"to review\"."
+msgstr ""
+
+#: includes/admin-strings.php:185
+msgid "Remove texts no longer on any page"
+msgstr ""
+
+#: includes/admin-strings.php:186
+msgid "Scan the site first: texts removed from every page are deleted with their translations."
+msgstr ""
+
+#: includes/admin-strings.php:196
+#: includes/admin-strings.php:430
+msgid "Page"
+msgstr ""
+
+#: includes/admin-strings.php:198
+#: includes/admin-strings.php:476
+msgid "All pages"
+msgstr ""
+
+#: includes/admin-strings.php:203
+msgid "Show"
+msgstr ""
+
+#: includes/admin-strings.php:205
+msgid "All texts"
+msgstr ""
+
+#: includes/admin-strings.php:206
+msgid "Missing a translation"
+msgstr ""
+
+#: includes/admin-strings.php:207
+msgid "To review"
+msgstr ""
+
+#: includes/admin-strings.php:209
+#: includes/switcher.php:47
+msgid "Language"
+msgstr ""
+
+#: includes/admin-strings.php:216
+msgid "Search"
+msgstr ""
+
+#: includes/admin-strings.php:218
+msgid "Filter"
+msgstr ""
+
+#: includes/admin-strings.php:222
+msgid "No texts here yet. Scan the site to collect them."
+msgstr ""
+
+#: includes/admin-strings.php:228
+msgid "Markers like [1]...[/1] stand for links and formatting, [2/] for a line break: keep them around the matching words. The page shows the base text wherever a translation is empty."
+msgstr ""
+
+#: includes/admin-strings.php:242
+msgid "page title"
+msgstr ""
+
+#: includes/admin-strings.php:242
+msgid "attribute"
+msgstr ""
+
+#. translators: %s: language name.
+#: includes/admin-strings.php:251
+#, php-format
+msgid "Translation in %s"
+msgstr ""
+
+#: includes/admin-strings.php:288
+#: includes/slugs.php:74
+msgid "You are not allowed to edit translations."
+msgstr ""
+
+#: includes/admin-strings.php:315
+msgid "You are not allowed to export translations."
+msgstr ""
+
+#: includes/admin-strings.php:323
+msgid "Unknown language."
+msgstr ""
+
+#: includes/admin-strings.php:343
+msgid "You are not allowed to import translations."
+msgstr ""
+
+#: includes/admin-strings.php:349
+msgid "The file could not be read."
+msgstr ""
+
+#. translators: %d: number of translations.
+#: includes/admin-strings.php:356
+#, php-format
+msgid "%d translation imported."
+msgid_plural "%d translations imported."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/admin-strings.php:368
+msgid "You are not allowed to change translations."
+msgstr ""
+
+#. translators: %d: number of texts.
+#: includes/admin-strings.php:373
+#, php-format
+msgid "%d unused text removed."
+msgid_plural "%d unused texts removed."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/admin-strings.php:385
+msgid "Home page"
+msgstr ""
+
+#: includes/admin-strings.php:386
+msgid "Page not found (404)"
+msgstr ""
+
+#: includes/admin-strings.php:387
+msgid "Search results"
+msgstr ""
+
+#: includes/admin-strings.php:427
+msgid "Pages"
+msgstr ""
+
+#: includes/admin-strings.php:431
+msgid "Texts"
+msgstr ""
+
+#. translators: %d: number of texts without a translation.
+#: includes/admin-strings.php:455
+#, php-format
+msgid "%d missing"
+msgid_plural "%d missing"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/admin-strings.php:459
+msgid "Translated"
+msgstr ""
+
+#. translators: %s: language name.
+#: includes/admin-strings.php:465
+#, php-format
+msgid "View in %s"
+msgstr ""
+
+#. translators: %d: marker number.
+#: includes/placeholders.php:77
+#, php-format
+msgid "Marker %d does not exist in the original text."
+msgstr ""
+
+#. translators: %d: marker number.
+#: includes/placeholders.php:84
+#, php-format
+msgid "Marker [%d] is used twice."
+msgstr ""
+
+#. translators: %d: marker number.
+#: includes/placeholders.php:92
+#, php-format
+msgid "Marker [/%d] closes in the wrong place."
+msgstr ""
+
+#: includes/placeholders.php:99
+msgid "Every [n]...[/n] marker of the original text must be in the translation."
+msgstr ""
+
+#: includes/placeholders.php:176
+msgid "Unknown text."
+msgstr ""
+
+#: includes/roles.php:30
+msgid "Translator"
+msgstr ""
+
+#: includes/slugs.php:112
+msgid "Translated addresses"
+msgstr ""
+
+#: includes/slugs.php:113
+msgid "Optional: a word of an address in each language, like \"chi-siamo\" for \"about\". Leave empty to keep the original word. Links, the language switcher and the sitemap follow automatically."
+msgstr ""
+
+#. translators: 1: address word, 2: language name.
+#: includes/slugs.php:135
+#, php-format
+msgid "\"%1$s\" in %2$s"
+msgstr ""
+
+#: includes/slugs.php:145
+msgid "Save addresses"
+msgstr ""
+
+#: includes/transfer.php:64
+msgid "This is not a LangSail export."
+msgstr ""
+
+#: includes/transfer.php:67
+msgid "The export was made from a site with a different base language."
+msgstr ""
+
+#: includes/transfer.php:231
+msgid "This is not a translation map."
+msgstr ""
+
+#: includes/transfer.php:252
+msgid "Choose one of the site languages for this file."
+msgstr ""
+
+#: blocks/switcher/index.js:17
+msgid "Display"
+msgstr ""
+
+#: blocks/switcher/index.js:20
+msgid "Show flags"
+msgstr ""
+
+#: blocks/switcher/index.js:21
+msgid "Flags stand for countries, not languages: the name or code is always shown too."
+msgstr ""
+
+#: blocks/switcher/index.js:32
+msgid "Text"
+msgstr ""
+
+#: blocks/switcher/index.js:37
+msgid "Language name (Italiano)"
+msgstr ""
+
+#: blocks/switcher/index.js:44
+msgid "Short code (IT)"
+msgstr ""
+
+#: blocks/switcher/block.json
+msgctxt "block title"
+msgid "Language switcher"
+msgstr ""
+
+#: blocks/switcher/block.json
+msgctxt "block description"
+msgid "Links to the current page in every site language."
+msgstr ""
+
+#: blocks/switcher/block.json
+msgctxt "block keyword"
+msgid "language"
+msgstr ""
+
+#: blocks/switcher/block.json
+msgctxt "block keyword"
+msgid "translation"
+msgstr ""
+
+#: blocks/switcher/block.json
+msgctxt "block keyword"
+msgid "multilingual"
+msgstr ""

@@ -153,3 +153,40 @@ function display_text( $html, $kind, $source = null ) {
 	}
 	return null === $source ? to_placeholders( $html )['text'] : translation_placeholders( $html, $source );
 }
+
+/**
+ * Turn translations as translators write them (markers for text units, plain text otherwise) into
+ * what is stored, rejecting the ones whose markers do not match the source.
+ *
+ * @param array<int, mixed> $texts Text id => translation.
+ * @return array{clean: array<int, string>, errors: array<int, string>} Errors are keyed by text id.
+ */
+function rebuild_translations( array $texts ) {
+	global $wpdb;
+	$ids     = array_filter( array_unique( array_map( 'absint', array_keys( $texts ) ) ) );
+	$strings = $ids ? array_column( $wpdb->get_results( 'SELECT id, kind, source FROM ' . tables()['strings'] . ' WHERE id IN (' . implode( ',', $ids ) . ')', ARRAY_A ), null, 'id' ) : array(); // phpcs:ignore WordPress.DB.PreparedSQL -- Integers.
+	$result  = array(
+		'clean'  => array(),
+		'errors' => array(),
+	);
+	foreach ( $texts as $id => $text ) {
+		$id     = absint( $id );
+		$string = $strings[ $id ] ?? null;
+		if ( ! $string || ! is_string( $text ) ) {
+			$result['errors'][ $id ] = __( 'Unknown text.', 'langsail' );
+			continue;
+		}
+		$text = trim( $text );
+		if ( '' === $text || 'text' !== $string['kind'] ) {
+			$result['clean'][ $id ] = sanitize_text_field( $text ); // Plain text: escaped where it is output.
+			continue;
+		}
+		$html = from_placeholders( $text, $string['source'] );
+		if ( is_wp_error( $html ) ) {
+			$result['errors'][ $id ] = sprintf( '%s: %s', wp_html_excerpt( to_placeholders( $string['source'] )['text'], 60, '...' ), $html->get_error_message() );
+			continue;
+		}
+		$result['clean'][ $id ] = $html;
+	}
+	return $result;
+}
