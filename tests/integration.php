@@ -105,7 +105,7 @@ try {
 	$plain = switcher_markup();
 	$coded = switcher_markup( '', array( 'showFlags' => true, 'label' => 'code' ) );
 	$check( str_contains( $plain, '>Italiano</a>' ) && ! str_contains( $plain, '<img' ) && 4 === substr_count( $plain, 'hreflang=' ), 'The switcher lists every language by name, without flags by default' );
-	$check( str_contains( $coded, '<img class="langsail-flag"' ) && str_contains( $coded, 'alt=""' ) && str_contains( $coded, '<span aria-hidden="true">RU</span><span class="screen-reader-text">Русский</span>' ), 'With flags and codes, flags are decorative and screen readers hear the full name' );
+	$check( str_contains( $coded, '<img class="langsail-flag"' ) && str_contains( $coded, 'alt=""' ) && str_contains( $coded, '<span>RU</span><span class="screen-reader-text"> Русский</span>' ), 'With flags and codes, flags are decorative and the accessible name is the code plus the full name' );
 
 	// Storage and dictionary.
 	$page = '/langsail-test-page/';
