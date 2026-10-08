@@ -165,6 +165,11 @@ function scan_page( $html ) {
 	}
 	$page  = page_key();
 	$units = units( $html ) + collected(); // Texts in the page, then texts passed through the API.
+	if ( is_search() && '' !== get_search_query( false ) ) {
+		// Texts that contain the visitor's query ("Results for ...") change with every search: WordPress translates them itself.
+		$query = get_search_query( false );
+		$units = array_filter( $units, fn( $source ) => false === stripos( html_entity_decode( $source, ENT_QUOTES | ENT_HTML5, 'UTF-8' ), $query ), ARRAY_FILTER_USE_KEY );
+	}
 	$new   = record_page( $page, $units );
 	header( 'Content-Type: application/json; charset=utf-8' );
 	return wp_json_encode(
@@ -176,8 +181,17 @@ function scan_page( $html ) {
 	);
 }
 
-/** The current page as a table key: its path, without language prefix and query. */
+/**
+ * The current page as a table key: its path, without language prefix and query. The "not found"
+ * and search result pages are one key each, whatever the address that led there.
+ */
 function page_key() {
+	if ( did_action( 'wp' ) && is_404() ) {
+		return '(404)';
+	}
+	if ( did_action( 'wp' ) && is_search() ) {
+		return '(search)';
+	}
 	$uri  = wp_unslash( $_SERVER['REQUEST_URI'] ?? '/' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Used as a key, escaped on output.
 	$path = (string) wp_parse_url( $uri, PHP_URL_PATH );
 	return '' === $path ? '/' : $path;

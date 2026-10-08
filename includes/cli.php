@@ -74,6 +74,13 @@ class CLI {
 	}
 
 	/**
+	 * Delete the texts that are on no page any more, with their translations.
+	 */
+	public function cleanup() {
+		\WP_CLI::success( sprintf( 'Removed %d unused texts.', remove_unused() ) );
+	}
+
+	/**
 	 * Show translation progress per language.
 	 */
 	public function stats() {

@@ -28,7 +28,7 @@ $cleanup = static function () {
 	global $wpdb;
 	$t = tables();
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$t['pages']} WHERE page IN (%s, %s)", '/langsail-test-page/', '/langsail-keep-test/' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
-	foreach ( array( 'LangSail test sentence one.', 'LangSail test alt', 'LangSail keep test' ) as $source ) {
+	foreach ( array( 'LangSail test sentence one.', 'LangSail test alt', 'LangSail keep test', 'LangSail test sentence one, edited.', 'Something completely different here.' ) as $source ) {
 		$id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$t['strings']} WHERE hash = %s", md5( $source ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
 		$wpdb->delete( $t['translations'], array( 'string_id' => $id ) );
 		$wpdb->delete( $t['strings'], array( 'id' => $id ) );
@@ -191,6 +191,15 @@ try {
 	$body = wp_remote_retrieve_body( $it );
 	$check( str_contains( $body, 'lang="it-IT"' ) || str_contains( $body, 'lang="it"' ), 'The page declares the request language' );
 	$check( str_contains( $body, 'hreflang="x-default"' ) && str_contains( $body, 'hreflang="ru"' ), 'Language versions are linked with hreflang' );
+
+	// Edited texts and cleanup.
+	record_page( $page, array( 'LangSail test sentence one, edited.' => 'text' ) );
+	$edited = current( query_strings( array( 'page' => $page, 'locales' => array( 'it_IT' ) ) )['rows'] );
+	$check( 'LangSail test sentence one, edited.' === $edited['source'] && 'review' === ( $edited['translations']['it_IT']['status'] ?? '' ) && '' !== ( $edited['translations']['it_IT']['text'] ?? '' ), 'An edited text inherits the old translations, marked to review' );
+	record_page( $page, array( 'Something completely different here.' => 'text' ) );
+	$other = current( query_strings( array( 'page' => $page, 'locales' => array( 'it_IT' ) ) )['rows'] );
+	$check( array() === $other['translations'], 'A text unlike the one it replaced starts untranslated' );
+	$check( remove_unused() >= 2 && ! dictionary( 'it_IT' )[ md5( 'LangSail test sentence one.' ) ], 'Texts on no page are removed with their translations' );
 
 	\WP_CLI::success( $langsail_passes . ' integration checks passed on WordPress ' . get_bloginfo( 'version' ) . ' / PHP ' . PHP_VERSION );
 } finally {

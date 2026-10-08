@@ -1,0 +1,4 @@
+{
+	"_note": "How similar (percent, plain text) an edited text must be to the one it replaced on the same page to inherit its translations, marked to review.",
+	"minimum": 70
+}

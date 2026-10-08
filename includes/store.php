@@ -73,7 +73,8 @@ function maybe_install() {
 
 /**
  * Record the units seen on a page: new strings are added, and the page's list is replaced, so
- * strings no longer on it stop being listed for it (their translations are kept).
+ * strings no longer on it stop being listed for it (their translations are kept). When a text of the
+ * page was edited, the new version gets the old translations marked "to review".
  *
  * @param string                $page  Page key (path without language prefix).
  * @param array<string, string> $units Source => kind, in page order.
@@ -81,10 +82,11 @@ function maybe_install() {
  */
 function record_page( $page, array $units ) {
 	global $wpdb;
-	$t     = tables();
-	$now   = current_time( 'mysql', true );
-	$new   = 0;
-	$ids   = array();
+	$t       = tables();
+	$now     = current_time( 'mysql', true );
+	$ids     = array();
+	$created = array();
+	$before  = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT string_id FROM {$t['pages']} WHERE page = %s", $page ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
 	foreach ( $units as $source => $kind ) {
 		if ( is_kept( $source ) ) {
 			continue; // Never translated: not listed, not counted.
@@ -95,8 +97,8 @@ function record_page( $page, array $units ) {
 			$wpdb->update( $t['strings'], array( 'seen' => $now ), array( 'id' => $id ) );
 		} else {
 			$wpdb->insert( $t['strings'], array( 'hash' => $hash, 'source' => $source, 'kind' => $kind, 'created' => $now, 'seen' => $now ) );
-			$id = (int) $wpdb->insert_id;
-			++$new;
+			$id                = (int) $wpdb->insert_id;
+			$created[ $id ]    = $source;
 		}
 		$ids[] = $id;
 	}
@@ -104,11 +106,54 @@ function record_page( $page, array $units ) {
 	foreach ( array_values( array_unique( $ids ) ) as $position => $id ) {
 		$wpdb->insert( $t['pages'], array( 'string_id' => $id, 'page' => $page, 'position' => $position ) );
 	}
+	carry_over_translations( $created, array_diff( $before, $ids ) );
 	wp_cache_delete( 'pages', 'langsail' );
-	do_action( 'langsail_page_scanned', $page, $new );
-	return $new;
+	do_action( 'langsail_page_scanned', $page, count( $created ) );
+	return count( $created );
 }
 
+/**
+ * Edited texts: each new text takes the translations of the most similar text that left the same
+ * page (at least the share in data/similarity.json), marked "to review", so a small change in the
+ * base language does not throw away the translations.
+ *
+ * @param array<int, string> $created New strings: id => source.
+ * @param int[]              $removed Ids of strings no longer on the page.
+ */
+function carry_over_translations( array $created, array $removed ) {
+	global $wpdb;
+	if ( ! $created || ! $removed ) {
+		return;
+	}
+	$t       = tables();
+	$min     = (float) ( json_decode( (string) file_get_contents( dirname( FILE ) . '/data/similarity.json' ), true )['minimum'] ?? 100 );
+	$plain   = fn( $html ) => normalize( wp_strip_all_tags( $html ) );
+	$sources = $wpdb->get_results( 'SELECT id, source, kind FROM ' . $t['strings'] . ' WHERE id IN (' . implode( ',', array_map( 'intval', $removed ) ) . ')', ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL -- Integers.
+	foreach ( $created as $id => $source ) {
+		$best  = null;
+		$score = 0.0;
+		foreach ( $sources as $old ) {
+			similar_text( $plain( $source ), $plain( $old['source'] ), $percent );
+			if ( $percent > $score ) {
+				$best  = $old;
+				$score = $percent;
+			}
+		}
+		if ( ! $best || $score < $min ) {
+			continue;
+		}
+		foreach ( $wpdb->get_results( $wpdb->prepare( "SELECT locale, text FROM {$t['translations']} WHERE string_id = %d", $best['id'] ), ARRAY_A ) as $row ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
+			$text = $row['text'];
+			// Markers must match the new text's tags: a text unit whose tags changed keeps the old translation only if it still fits.
+			if ( 'text' === $best['kind'] && is_wp_error( from_placeholders( translation_placeholders( $text, $best['source'] ), $source ) ) ) {
+				$text = wp_strip_all_tags( $text );
+			} elseif ( 'text' === $best['kind'] ) {
+				$text = from_placeholders( translation_placeholders( $text, $best['source'] ), $source );
+			}
+			save_translations( $row['locale'], array( $id => $text ), 'review' );
+		}
+	}
+}
 /**
  * Translations of a locale: hash => text. One query per request, kept in the object cache.
  *
@@ -256,4 +301,22 @@ function page_progress( $page ) {
 		);
 	}
 	return $cache[ $page ];
+}
+
+/**
+ * Delete the texts that are on no page any more, with their translations.
+ *
+ * @return int Number of texts deleted.
+ */
+function remove_unused() {
+	global $wpdb;
+	$t   = tables();
+	$ids = array_map( 'intval', $wpdb->get_col( "SELECT s.id FROM {$t['strings']} s LEFT JOIN {$t['pages']} p ON p.string_id = s.id WHERE p.string_id IS NULL" ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names.
+	if ( $ids ) {
+		$in = implode( ',', $ids );
+		$wpdb->query( "DELETE FROM {$t['translations']} WHERE string_id IN ($in)" ); // phpcs:ignore WordPress.DB.PreparedSQL -- Integers.
+		$wpdb->query( "DELETE FROM {$t['strings']} WHERE id IN ($in)" ); // phpcs:ignore WordPress.DB.PreparedSQL -- Integers.
+		wp_cache_flush_group( 'langsail' );
+	}
+	return count( $ids );
 }

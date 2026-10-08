@@ -13,6 +13,8 @@ defined( 'ABSPATH' ) || exit;
 add_action( 'admin_post_langsail_translations', __NAMESPACE__ . '\\save_strings' );
 add_action( 'admin_post_langsail_export', __NAMESPACE__ . '\\download_export' );
 add_action( 'admin_post_langsail_import', __NAMESPACE__ . '\\upload_import' );
+add_action( 'admin_post_langsail_cleanup', __NAMESPACE__ . '\\cleanup_unused' );
+add_action( 'enqueue_block_editor_assets', __NAMESPACE__ . '\\editor_scan_assets' );
 add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\strings_assets' );
 
 /** Rows per table page. */
@@ -53,6 +55,24 @@ function strings_assets( $hook ) {
 	);
 }
 
+/** Scan after saving in the block and site editors, so new texts reach the table without a click. */
+function editor_scan_assets() {
+	if ( ! current_user_can( 'manage_options' ) || ! settings()['languages'] ) {
+		return;
+	}
+	wp_enqueue_script( 'langsail-editor-scan', plugins_url( 'assets/editor-scan.js', FILE ), array( 'wp-data' ), VERSION, array( 'in_footer' => true ) );
+	wp_add_inline_script(
+		'langsail-editor-scan',
+		'window.langsailScan = ' . wp_json_encode(
+			array(
+				'urls'  => scan_urls(),
+				'arg'   => SCAN_ARG,
+				'nonce' => wp_create_nonce( 'langsail_scan' ),
+			)
+		) . ';',
+		'before'
+	);
+}
 /** Addresses to scan: the home page and every published page and post of a public type. */
 function scan_urls() {
 	$urls  = array( home_url( '/' ) );
@@ -71,6 +91,9 @@ function scan_urls() {
 	foreach ( $ids as $id ) {
 		$urls[] = get_permalink( $id );
 	}
+	// The "not found" page and the search results have texts of their own.
+	$urls[] = home_url( '/langsail-scan-not-found/' );
+	$urls[] = add_query_arg( 's', 'langsail', home_url( '/' ) );
 	return array_values( array_unique( $urls ) );
 }
 
@@ -178,6 +201,12 @@ function strings_page() {
 				<?php submit_button( __( 'Import', 'langsail' ), 'secondary', '', false ); ?>
 			</form>
 			<p class="description"><?php esc_html_e( 'JSON carries every text and language, for moving translations between sites (local to live). PO holds one language for Poedit or a translator; fuzzy entries are imported as "to review".', 'langsail' ); ?></p>
+			<form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post">
+				<input type="hidden" name="action" value="langsail_cleanup">
+				<?php wp_nonce_field( 'langsail_cleanup' ); ?>
+				<?php submit_button( __( 'Remove texts no longer on any page', 'langsail' ), 'secondary', '', false ); ?>
+				<span class="description"><?php esc_html_e( 'Scan the site first: texts removed from every page are deleted with their translations.', 'langsail' ); ?></span>
+			</form>
 		</details>
 
 		<form method="get" class="langsail-filters">
@@ -367,6 +396,19 @@ function upload_import() {
 			set_transient( 'langsail_errors_' . $user, $result['errors'], HOUR_IN_SECONDS );
 		}
 	}
+	wp_safe_redirect( admin_url( 'admin.php?page=langsail' ) );
+	exit;
+}
+
+/** Delete the texts no page uses any more. */
+function cleanup_unused() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( esc_html__( 'You are not allowed to change translations.', 'langsail' ), 403 );
+	}
+	check_admin_referer( 'langsail_cleanup' );
+	$removed = remove_unused();
+	/* translators: %d: number of texts. */
+	set_transient( 'langsail_imported_' . get_current_user_id(), sprintf( _n( '%d unused text removed.', '%d unused texts removed.', $removed, 'langsail' ), $removed ), HOUR_IN_SECONDS );
 	wp_safe_redirect( admin_url( 'admin.php?page=langsail' ) );
 	exit;
 }

@@ -18,3 +18,8 @@
 - LangSail keeps itself first among active plugins, so the request language is set before other plugins load their translations.
 - Never-translate list in the settings (brands, codes); link-tag titles are not collected; empty icons inside wrapped links stay out of units.
 - Translation maps (.json, source text to translation) import into one language; date picker screen reader labels (data/flatpickr.json) for Fluent Forms.
+- Filters for other plugins' settings: langsail_languages, langsail_get_translation, langsail_set_translation (Mintchat shows a message field per language).
+- Scan covers the not-found and search pages (one key each); texts containing the search query are skipped.
+- Edited texts inherit the translations of the most similar text they replaced on the page, marked to review (data/similarity.json).
+- Saving in the block or site editor scans the page (templates, parts, menus and patterns: every page).
+- Remove texts no longer on any page (button and wp langsail cleanup).
