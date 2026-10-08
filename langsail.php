@@ -29,8 +29,14 @@ require_once __DIR__ . '/includes/html.php';
 require_once __DIR__ . '/includes/placeholders.php';
 require_once __DIR__ . '/includes/store.php';
 require_once __DIR__ . '/includes/frontend.php';
+require_once __DIR__ . '/includes/api.php';
 require_once __DIR__ . '/includes/switcher.php';
 require_once __DIR__ . '/includes/integrations.php';
+require_once __DIR__ . '/includes/transfer.php';
+
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	require_once __DIR__ . '/includes/cli.php';
+}
 
 if ( is_admin() ) {
 	require_once __DIR__ . '/includes/admin-settings.php';

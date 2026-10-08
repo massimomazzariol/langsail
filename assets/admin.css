@@ -75,3 +75,12 @@
 	height: 1.25em;
 	vertical-align: -0.25em;
 }
+
+.langsail-transfer {
+	margin: 1em 0;
+}
+
+.langsail-transfer summary {
+	cursor: pointer;
+	font-weight: 600;
+}

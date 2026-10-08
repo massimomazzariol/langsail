@@ -138,3 +138,18 @@ function translation_placeholders( $html, $source ) {
 	}
 	return $text;
 }
+
+/**
+ * A stored text as translators see it: markers instead of tags for text units, plain characters
+ * instead of entities for everything.
+ *
+ * @param string $html   Stored text.
+ * @param string $kind   text, attr or title.
+ * @param string $source Source unit, for a translation (keeps the source's marker numbers).
+ */
+function display_text( $html, $kind, $source = null ) {
+	if ( 'text' !== $kind ) {
+		return html_entity_decode( $html, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	}
+	return null === $source ? to_placeholders( $html )['text'] : translation_placeholders( $html, $source );
+}

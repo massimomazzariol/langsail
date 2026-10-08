@@ -1,0 +1,5 @@
+{
+	"_note": "Attributes whose values people read or hear: exact names, and prefixes (any attribute starting with them, e.g. data-label-hour passed to a script).",
+	"names": [ "alt", "title", "placeholder", "aria-label", "aria-description", "aria-roledescription", "aria-valuetext" ],
+	"prefixes": [ "data-label" ]
+}

@@ -12,14 +12,28 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Read the language from the request path and strip its prefix. Runs when the plugin loads, before
- * WordPress parses the request or loads any translation file.
+ * WordPress parses the request or loads any translation file. Background requests made by a page
+ * (admin-ajax, REST API: forms, filters, live search) have no prefix; they take the language of the
+ * page that made them, read from the Referer header, so their messages match the page.
  */
 function boot_router() {
-	if ( is_admin() || wp_doing_cron() || ( defined( 'WP_CLI' ) && WP_CLI ) || empty( $_SERVER['REQUEST_URI'] ) ) {
+	if ( wp_doing_cron() || ( defined( 'WP_CLI' ) && WP_CLI ) || empty( $_SERVER['REQUEST_URI'] ) ) {
 		return;
 	}
-	$uri    = wp_unslash( $_SERVER['REQUEST_URI'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Compared and rewritten, never printed.
-	$found  = language_from_uri( $uri );
+	$uri = wp_unslash( $_SERVER['REQUEST_URI'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Compared and rewritten, never printed.
+	if ( wp_doing_ajax() || is_rest_uri( $uri ) ) {
+		$referer = page_referer();
+		$found   = '' !== $referer ? language_from_uri( $referer ) : null;
+		if ( $found ) {
+			current_language( $found['locale'] );
+			add_filter( 'locale', __NAMESPACE__ . '\\request_locale' );
+			ob_start( __NAMESPACE__ . '\\translate_response' );
+		}
+	}
+	if ( is_admin() ) {
+		return;
+	}
+	$found = language_from_uri( $uri );
 	if ( ! $found ) {
 		return;
 	}
@@ -39,6 +53,28 @@ function boot_router() {
 	add_filter( 'wp_redirect', __NAMESPACE__ . '\\localize_redirect' );
 }
 
+/**
+ * Whether a request URI is a REST API call (pretty /wp-json/ or ?rest_route=).
+ *
+ * @param string $uri Request URI.
+ */
+function is_rest_uri( $uri ) {
+	$home = (string) wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+	return str_starts_with( $uri, $home . rest_get_url_prefix() . '/' ) || str_contains( $uri, 'rest_route=' );
+}
+
+/**
+ * Path and query of the page that made this request, when it is a front-end page of this site, or ''.
+ */
+function page_referer() {
+	$referer = isset( $_SERVER['HTTP_REFERER'] ) ? wp_unslash( $_SERVER['HTTP_REFERER'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Parsed and compared only.
+	$parts   = is_string( $referer ) ? wp_parse_url( $referer ) : false;
+	$home    = wp_parse_url( home_url( '/' ) );
+	if ( ! $parts || ! isset( $parts['host'] ) || strcasecmp( $parts['host'], $home['host'] ?? '' ) ) {
+		return '';
+	}
+	return ( $parts['path'] ?? '/' ) . ( isset( $parts['query'] ) ? '?' . $parts['query'] : '' );
+}
 /**
  * The translation language named by a request URI, and the URI without its prefix.
  *
@@ -64,12 +100,13 @@ function language_from_uri( $uri ) {
 }
 
 /**
- * WordPress runs in the request language on the front end; the admin keeps each user's own language.
+ * WordPress runs in the request language on the front end and in background requests made by a
+ * translated page; admin screens keep each user's own language.
  *
  * @param string $locale Locale chosen by WordPress.
  */
 function request_locale( $locale ) {
-	return is_admin() ? $locale : current_language();
+	return is_admin() && ! wp_doing_ajax() ? $locale : current_language();
 }
 
 /**

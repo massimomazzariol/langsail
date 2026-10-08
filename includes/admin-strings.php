@@ -11,6 +11,8 @@ namespace LangSail;
 defined( 'ABSPATH' ) || exit;
 
 add_action( 'admin_post_langsail_translations', __NAMESPACE__ . '\\save_strings' );
+add_action( 'admin_post_langsail_export', __NAMESPACE__ . '\\download_export' );
+add_action( 'admin_post_langsail_import', __NAMESPACE__ . '\\upload_import' );
 add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\strings_assets' );
 
 /** Rows per table page. */
@@ -115,6 +117,11 @@ function strings_page() {
 		<?php if ( isset( $_GET['saved'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only. ?>
 			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Translations saved.', 'langsail' ); ?></p></div>
 		<?php endif; ?>
+		<?php $imported = get_transient( 'langsail_imported_' . get_current_user_id() ); ?>
+		<?php if ( $imported ) : ?>
+			<?php delete_transient( 'langsail_imported_' . get_current_user_id() ); ?>
+			<div class="notice notice-success is-dismissible"><p><?php echo esc_html( $imported ); ?></p></div>
+		<?php endif; ?>
 		<?php $errors = get_transient( 'langsail_errors_' . get_current_user_id() ); ?>
 		<?php if ( $errors ) : ?>
 			<?php delete_transient( 'langsail_errors_' . get_current_user_id() ); ?>
@@ -147,6 +154,31 @@ function strings_page() {
 				<span id="langsail-scan-status" role="status" aria-live="polite"></span>
 			</p>
 		</div>
+
+		<details class="langsail-transfer">
+			<summary><?php esc_html_e( 'Import and export', 'langsail' ); ?></summary>
+			<p>
+				<?php esc_html_e( 'Export:', 'langsail' ); ?>
+				<a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=langsail_export&format=json' ), 'langsail_export' ) ); ?>"><?php esc_html_e( 'All languages (JSON)', 'langsail' ); ?></a>
+				<?php foreach ( $languages as $locale => $language ) : ?>
+					<a class="button" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=langsail_export&format=po&locale=' . rawurlencode( $locale ) ), 'langsail_export' ) ); ?>"><?php echo flag_img( $locale ) . ' ' . esc_html( $language['name'] ) . ' (PO)'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag_img() escapes. ?></a>
+				<?php endforeach; ?>
+			</p>
+			<form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" enctype="multipart/form-data" class="langsail-filters">
+				<input type="hidden" name="action" value="langsail_import">
+				<?php wp_nonce_field( 'langsail_import' ); ?>
+				<label for="langsail-import-file"><?php esc_html_e( 'File (.json or .po)', 'langsail' ); ?></label>
+				<input type="file" id="langsail-import-file" name="file" accept=".json,.po" required>
+				<label for="langsail-import-locale"><?php esc_html_e( 'Language of a .po file', 'langsail' ); ?></label>
+				<select id="langsail-import-locale" name="locale">
+					<?php foreach ( $languages as $locale => $language ) : ?>
+						<option value="<?php echo esc_attr( $locale ); ?>"><?php echo esc_html( $language['name'] ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<?php submit_button( __( 'Import', 'langsail' ), 'secondary', '', false ); ?>
+			</form>
+			<p class="description"><?php esc_html_e( 'JSON carries every text and language, for moving translations between sites (local to live). PO holds one language for Poedit or a translator; fuzzy entries are imported as "to review".', 'langsail' ); ?></p>
+		</details>
 
 		<form method="get" class="langsail-filters">
 			<input type="hidden" name="page" value="langsail">
@@ -238,21 +270,6 @@ function strings_page() {
 	<?php
 }
 
-/**
- * A stored text as translators see it: markers instead of tags for text units, plain characters
- * instead of entities for everything.
- *
- * @param string $html   Stored text.
- * @param string $kind   text, attr or title.
- * @param string $source Source unit, for a translation (keeps the source's marker numbers).
- */
-function display_text( $html, $kind, $source = null ) {
-	if ( 'text' !== $kind ) {
-		return html_entity_decode( $html, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-	}
-	return null === $source ? to_placeholders( $html )['text'] : translation_placeholders( $html, $source );
-}
-
 /** Save the submitted translations, rebuilding text units from their markers. */
 function save_strings() {
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -298,5 +315,58 @@ function save_strings() {
 	}
 	$return = isset( $_POST['return'] ) ? esc_url_raw( wp_unslash( $_POST['return'] ) ) : '';
 	wp_safe_redirect( add_query_arg( 'saved', '1', $return ? $return : admin_url( 'admin.php?page=langsail' ) ) );
+	exit;
+}
+
+/** Send an export file: every language as JSON, or one language as PO. */
+function download_export() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( esc_html__( 'You are not allowed to export translations.', 'langsail' ), 403 );
+	}
+	check_admin_referer( 'langsail_export' );
+	$host = sanitize_file_name( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
+	$date = gmdate( 'Y-m-d' );
+	if ( 'po' === ( $_GET['format'] ?? '' ) ) {
+		$locale = sanitize_locale( wp_unslash( $_GET['locale'] ?? '' ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Whitelisted format.
+		if ( ! isset( settings()['languages'][ $locale ] ) ) {
+			wp_die( esc_html__( 'Unknown language.', 'langsail' ), 400 );
+		}
+		$name    = "langsail-$host-$locale-$date.po";
+		$type    = 'text/x-gettext-translation';
+		$content = export_po( $locale );
+	} else {
+		$name    = "langsail-$host-$date.json";
+		$type    = 'application/json';
+		$content = wp_json_encode( export_json(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+	}
+	nocache_headers();
+	header( 'Content-Type: ' . $type . '; charset=utf-8' );
+	header( 'Content-Disposition: attachment; filename="' . $name . '"' );
+	echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- File download.
+	exit;
+}
+
+/** Import an uploaded .json export or .po file. */
+function upload_import() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( esc_html__( 'You are not allowed to import translations.', 'langsail' ), 403 );
+	}
+	check_admin_referer( 'langsail_import' );
+	$file    = $_FILES['file'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Only read from its temporary path.
+	$name    = is_array( $file ) ? strtolower( (string) ( $file['name'] ?? '' ) ) : '';
+	$content = is_array( $file ) && UPLOAD_ERR_OK === ( $file['error'] ?? -1 ) && is_uploaded_file( $file['tmp_name'] ) ? file_get_contents( $file['tmp_name'] ) : false; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Uploaded file.
+	$result  = false === $content ? new \WP_Error( 'langsail_import', __( 'The file could not be read.', 'langsail' ) )
+		: ( str_ends_with( $name, '.po' ) ? import_po( $content, sanitize_locale( wp_unslash( $_POST['locale'] ?? '' ) ) ) : import_json( json_decode( $content, true ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Whitelisted format.
+	$user    = get_current_user_id();
+	if ( is_wp_error( $result ) ) {
+		set_transient( 'langsail_errors_' . $user, array( $result->get_error_message() ), HOUR_IN_SECONDS );
+	} else {
+		/* translators: %d: number of translations. */
+		set_transient( 'langsail_imported_' . $user, sprintf( _n( '%d translation imported.', '%d translations imported.', $result['translations'], 'langsail' ), $result['translations'] ), HOUR_IN_SECONDS );
+		if ( ! empty( $result['errors'] ) ) {
+			set_transient( 'langsail_errors_' . $user, $result['errors'], HOUR_IN_SECONDS );
+		}
+	}
+	wp_safe_redirect( admin_url( 'admin.php?page=langsail' ) );
 	exit;
 }

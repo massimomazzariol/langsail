@@ -164,7 +164,7 @@ function scan_page( $html ) {
 		return $html;
 	}
 	$page  = page_key();
-	$units = units( $html );
+	$units = units( $html ) + collected(); // Texts in the page, then texts passed through the API.
 	$new   = record_page( $page, $units );
 	header( 'Content-Type: application/json; charset=utf-8' );
 	return wp_json_encode(

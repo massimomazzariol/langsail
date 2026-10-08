@@ -25,8 +25,6 @@ const RAW_TAGS = array( 'script', 'style', 'textarea', 'template', 'noscript', '
 /** Elements without a closing tag. */
 const VOID_TAGS = array( 'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr' );
 
-/** Attributes read by people (or screen readers). */
-const TEXT_ATTRIBUTES = array( 'alt', 'title', 'placeholder', 'aria-label', 'aria-description' );
 
 /** Meta tags whose content is page text (by name or property). */
 const TEXT_META = array( 'description', 'og:title', 'og:description', 'og:image:alt', 'og:site_name', 'twitter:title', 'twitter:description', 'twitter:image:alt' );
@@ -127,12 +125,14 @@ function normalize( $text ) {
 }
 
 /**
- * Whether a unit holds words (at least one letter), not just numbers, symbols or tags.
+ * Whether a unit holds words (at least one letter), not just numbers, symbols, tags or merge
+ * placeholders like {all_data} that a plugin fills in later.
  *
  * @param string $html Unit HTML.
  */
 function has_words( $html ) {
-	return (bool) preg_match( '/\p{L}/u', html_entity_decode( wp_strip_all_tags( $html ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+	$text = html_entity_decode( wp_strip_all_tags( $html ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	return (bool) preg_match( '/\p{L}/u', preg_replace( '/\{[^{}\s]+\}/', '', $text ) );
 }
 
 /**
@@ -354,7 +354,7 @@ function translate_tags( $html, callable $translate, $link = null ) {
 		}
 		$attrs  = $token['attrs'];
 		$jsonld = 'script' === $token['name'] && 'application/ld+json' === strtolower( $attrs['type']['value'] ?? '' );
-		$names  = TEXT_ATTRIBUTES;
+		$names  = text_attributes( array_keys( $attrs ) );
 		if ( 'input' === $token['name'] && in_array( strtolower( $attrs['type']['value'] ?? '' ), array( 'submit', 'button', 'reset' ), true ) ) {
 			$names[] = 'value';
 		}
@@ -389,6 +389,35 @@ function translate_tags( $html, callable $translate, $link = null ) {
 		$html = substr_replace( $html, $edit[1], $start, $edit[0] - $start );
 	}
 	return $html;
+}
+
+/**
+ * Which of a tag's attributes are read by people (data/attributes.json: names and prefixes).
+ *
+ * @param string[] $present Attribute names of the tag.
+ * @return string[]
+ */
+function text_attributes( array $present ) {
+	static $rules = null;
+	if ( null === $rules ) {
+		$rules = json_decode( (string) file_get_contents( dirname( FILE ) . '/data/attributes.json' ), true );
+	}
+	return array_values(
+		array_filter(
+			$present,
+			function ( $name ) use ( $rules ) {
+				if ( in_array( $name, $rules['names'], true ) ) {
+					return true;
+				}
+				foreach ( $rules['prefixes'] as $prefix ) {
+					if ( str_starts_with( $name, $prefix ) ) {
+						return true;
+					}
+				}
+				return false;
+			}
+		)
+	);
 }
 
 /**

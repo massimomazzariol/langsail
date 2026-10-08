@@ -9,3 +9,8 @@
 - Pages translated on output, untranslated texts fall back to the base language; internal and canonical links localized; hreflang alternates with x-default.
 - Language switcher block: native names or codes, optional flags (circle-flags language set, MIT); flags also in the admin.
 - SEO: attribute, title and JSON-LD texts are plain-text units shared across them; JSON-LD names and URLs translated; a language version is indexed (hreflang, sitemap) only once the threshold share of its page is translated, otherwise sent with X-Robots-Tag noindex; language versions added to The SEO Framework sitemap and to XML sitemaps that pass through output buffers.
+- Background requests (admin-ajax, REST) made by a translated page run in its language (Referer) and their JSON or HTML responses are translated.
+- Public filters langsail_translate (plain text) and langsail_translate_html (HTML, unit by unit): texts collected during scans, translated on translated requests.
+- Integrations: Mintchat pre-filled message (mintchat_message), Fluent Forms browser and server validation messages, confirmation message, and emails sent to the visitor (recipient from a form field) in the visitor's language; emails to fixed addresses keep the base language.
+- Readable attributes are listed in data/attributes.json (names and prefixes, data-label-* included); units made only of merge placeholders like {all_data} are skipped.
+- Import and export: JSON with every text and language (moves translations between sites), PO per language with markers and fuzzy entries; WP-CLI wp langsail export, import, stats.

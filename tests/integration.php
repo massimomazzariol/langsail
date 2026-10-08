@@ -92,6 +92,10 @@ try {
 	$check( array( 'Airport transfers' => 'text' ) === $nav, 'A text wholly inside a link or label is a unit without its wrappers' );
 	$check( array( 'Quote within 24 hours' => 'text' ) === units( '<p><span class="dot" aria-hidden="true">&#9679;</span> Quote within 24 hours</p>' ), 'Decorative elements at the start of a unit stay out of it' );
 
+	$check( array( 'Choose a time' => 'attr', 'Hour' => 'attr' ) === units( '<input data-label-panel="Choose a time" data-label-hour="Hour" data-step="15" data-name="time">' ), 'Label data attributes (data-label-*) are units, other data attributes are not' );
+
+	$check( array( 'Your request: {inputs.pickup}' => 'text' ) === units( '<p>{all_data}</p><p>Your request: {inputs.pickup}</p>' ), 'Units made only of merge placeholders are skipped' );
+
 	// Placeholders.
 	$source = 'Hello <a href="/about/">our <strong>team</strong></a> &amp; friends<br>today.';
 	$shown  = to_placeholders( $source );
@@ -123,12 +127,41 @@ try {
 	$check( 1 === (int) query_strings( array( 'page' => $page, 'status' => 'missing', 'locales' => array( 'it_IT', 'es_ES' ) ) )['total'], 'A text missing in any language is listed as missing' );
 	$check( '<p>Frase di prova LangSail uno.</p>' === translate_html( '<p>LangSail test sentence one.</p>', 'it_IT' ), 'Pages are translated from the dictionary' );
 
+	// Import and export.
+	$export = export_json();
+	$entry  = current( array_filter( $export['strings'], fn( $s ) => 'LangSail test sentence one.' === $s['source'] ) );
+	$check( 'langsail' === $export['format'] && $entry && 'Frase di prova LangSail uno.' === ( (array) $entry['translations'] )['it_IT']['text'] && in_array( $page, $entry['pages'], true ), 'The JSON export carries texts, pages and translations' );
+	$entry['translations'] = array( 'es_ES' => array( 'text' => 'Frase de prueba LangSail uno.', 'status' => 'translated' ) );
+	$imported = import_json( array( 'format' => 'langsail', 'version' => 1, 'base' => settings()['base'], 'strings' => array( $entry ) ) );
+	$check( ! is_wp_error( $imported ) && 1 === $imported['translations'] && 'Frase de prueba LangSail uno.' === ( dictionary( 'es_ES' )[ md5( 'LangSail test sentence one.' ) ] ?? '' ), 'A JSON import writes the translations of the site languages' );
+	$check( is_wp_error( import_json( array( 'format' => 'langsail', 'base' => 'xx_XX', 'strings' => array() ) ) ) && is_wp_error( import_json( array( 'foo' ) ) ), 'Exports from another base language or other files are refused' );
+	$po = export_po( 'it_IT' );
+	$check( str_contains( $po, 'msgid "LangSail test sentence one."' ) && str_contains( $po, 'msgstr "Frase di prova LangSail uno."' ) && str_contains( $po, '#: ' . $page ) && str_contains( $po, '"Language: it_IT\\n"' ), 'The PO export lists the texts of the language with their pages' );
+	$check( array( array( 'msgid' => 'A "quoted" line', 'msgstr' => "Una riga\ncon \"virgolette\"", 'fuzzy' => true ) ) === parse_po( "#, fuzzy\nmsgid \"A \\\"quoted\\\" \"\n\"line\"\nmsgstr \"Una riga\\ncon \\\"virgolette\\\"\"\n" ), 'PO files are parsed with continuation lines, escapes and the fuzzy flag' );
+	$po_import = import_po( "#, fuzzy\nmsgid \"LangSail test sentence one.\"\nmsgstr \"Frase rivista.\"\n", 'ru_RU' );
+	$row       = current( query_strings( array( 'page' => $page, 'locales' => array( 'ru_RU' ) ) )['rows'] );
+	$check( ! is_wp_error( $po_import ) && 1 === $po_import['translations'] && 'review' === ( $row['translations']['ru_RU']['status'] ?? '' ), 'A fuzzy PO entry is imported as "to review"' );
+	$check( is_wp_error( import_po( '', 'de_DE' ) ), 'A PO file for a language the site does not have is refused' );
+
+	// API and background responses.
+	$check( 'LangSail test sentence one.' === apply_filters( 'langsail_translate', 'LangSail test sentence one.' ), 'Outside a translated request the API returns the text unchanged' );
+	current_language( 'it_IT' );
+	$check( 'Frase di prova LangSail uno.' === apply_filters( 'langsail_translate', "LangSail test\n sentence one." ) && 'Untranslated text' === apply_filters( 'langsail_translate', 'Untranslated text' ), 'In a translated request the API returns the translation, or the text when there is none' );
+	$json = translate_response( wp_json_encode( array( 'success' => true, 'data' => array( 'message' => '<p>LangSail test sentence one.</p>', 'plain' => 'LangSail test sentence one.', 'count' => 3 ) ) ) );
+	$check( str_contains( $json, '"message":"<p>Frase di prova LangSail uno.</p>"' ) && str_contains( $json, '"plain":"Frase di prova LangSail uno."' ) && str_contains( $json, '"count":3' ), 'JSON responses of background requests are translated string by string' );
+	current_language( settings()['base'] );
+	$_SERVER['HTTP_REFERER'] = home_url( '/es/privacy-policy/?x=1' );
+	$check( array( 'locale' => 'es_ES', 'uri' => (string) wp_parse_url( home_url( '/privacy-policy/?x=1' ), PHP_URL_PATH ) . '?x=1' ) === language_from_uri( page_referer() ), 'A background request takes the language of the page that made it' );
+	$_SERVER['HTTP_REFERER'] = 'https://example.com/es/';
+	$check( '' === page_referer(), 'A referer from another site is ignored' );
+	unset( $_SERVER['HTTP_REFERER'] );
+
 	// Indexing readiness and sitemap.
-	$check( is_ready( 'en_US', $page ) && ! is_ready( 'es_ES', $page ) && is_ready( 'it_IT', $page ), 'A page is indexable in a language once all its texts are translated (default threshold 100%)' );
+	$check( is_ready( 'en_US', $page ) && ! is_ready( 'ru_RU', $page ) && is_ready( 'it_IT', $page ), 'A page is indexable in a language once all its texts are translated, reviews excluded (default threshold 100%)' );
 	$check( ! is_ready( 'it_IT', '/never-scanned/' ), 'A page never scanned is not indexable in a translation' );
 	$map_xml = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' . home_url( $page ) . '</loc><lastmod>2026-10-08</lastmod></url><url><loc>https://example.com/x/</loc></url></urlset>';
 	$map_out = localize_sitemap( $map_xml );
-	$check( str_contains( $map_out, 'xmlns:xhtml=' ) && 2 === substr_count( $map_out, '<loc>' . esc_url( home_url( $page ) ) ) + substr_count( $map_out, '<loc>' . esc_url( home_url( '/it' . $page ) ) ) && ! str_contains( $map_out, home_url( '/es' . $page ) ) && str_contains( $map_out, 'hreflang="x-default"' ) && str_contains( $map_out, '<loc>https://example.com/x/</loc>' ), 'The sitemap lists every ready language version with alternates and leaves other hosts alone' );
+	$check( str_contains( $map_out, 'xmlns:xhtml=' ) && 2 === substr_count( $map_out, '<loc>' . esc_url( home_url( $page ) ) ) + substr_count( $map_out, '<loc>' . esc_url( home_url( '/it' . $page ) ) ) && ! str_contains( $map_out, home_url( '/ru' . $page ) ) && str_contains( $map_out, 'hreflang="x-default"' ) && str_contains( $map_out, '<loc>https://example.com/x/</loc>' ), 'The sitemap lists every ready language version with alternates and leaves other hosts alone' );
 
 	// Real pages: scan the home page, translate one of its texts, read it in Italian.
 	$http     = array( 'timeout' => 60 ); // Local sites can be slow on a cold request.
