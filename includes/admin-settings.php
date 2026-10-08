@@ -92,6 +92,13 @@ function settings_page() {
 						<p class="description" id="langsail-languages-help"><?php esc_html_e( 'Hold Ctrl (Cmd on a Mac) to select more than one. Each language gets its own address prefix and the WordPress, theme and plugin translations are downloaded.', 'langsail' ); ?></p>
 					</td>
 				</tr>
+				<tr>
+					<th scope="row"><label for="langsail-threshold"><?php esc_html_e( 'Indexing', 'langsail' ); ?></label></th>
+					<td>
+						<input type="number" id="langsail-threshold" name="threshold" min="0" max="100" step="5" value="<?php echo esc_attr( (string) $settings['threshold'] ); ?>" class="small-text" aria-describedby="langsail-threshold-help"> %
+						<p class="description" id="langsail-threshold-help"><?php esc_html_e( 'A language version of a page is offered to search engines (hreflang, sitemap) only when at least this share of its texts is translated; until then it is marked noindex.', 'langsail' ); ?></p>
+					</td>
+				</tr>
 				<?php if ( $settings['languages'] ) : ?>
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Addresses', 'langsail' ); ?></th>
@@ -137,6 +144,7 @@ function save_settings() {
 		array(
 			'base'      => $base,
 			'confirmed' => true,
+			'threshold' => isset( $_POST['threshold'] ) ? absint( $_POST['threshold'] ) : $current['threshold'],
 			'languages' => $languages,
 			'names'     => $names,
 		)

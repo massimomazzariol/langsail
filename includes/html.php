@@ -318,30 +318,43 @@ function balanced( array $tokens ) {
 }
 
 /**
- * Replace attribute units through $translate( $source, 'attr' ) and the document title through
- * $translate( $source, 'title' ); optionally map links (a/area href, canonical, og:url) through
- * $link( $url ).
+ * Replace the plain-text units: readable attributes, the document title and the texts of JSON-LD
+ * structured data, all keyed by their decoded text (so "&amp;" in an attribute and "&" in JSON are
+ * the same unit) through $translate( $source, kind ). Optionally map links (a/area href, canonical,
+ * og:url, JSON-LD url and @id) through $link( $url ).
  *
  * @param string        $html      HTML.
- * @param callable      $translate Callback returning the new text or null.
+ * @param callable      $translate Callback returning the new plain text or null.
  * @param callable|null $link      Callback returning the new URL.
  */
 function translate_tags( $html, callable $translate, $link = null ) {
-	$edits = array(); // start => array( end, replacement ).
+	$edits  = array(); // start => array( end, replacement ).
+	$plain  = function ( $raw, $kind ) use ( $translate ) {
+		$text = trim( html_entity_decode( $raw, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+		return '' !== $text && has_words( $text ) ? $translate( normalize( $text ), $kind ) : null;
+	};
+	$jsonld = false;
 	foreach ( tokens( $html ) as $token ) {
-		if ( 'raw' === $token['type'] && 'title' === $token['name'] ) {
-			$source = trim( substr( $html, $token['start'], $token['end'] - $token['start'] ) );
-			$new    = '' !== $source && has_words( $source ) ? $translate( normalize( $source ), 'title' ) : null;
+		if ( 'raw' === $token['type'] ) {
+			$raw = substr( $html, $token['start'], $token['end'] - $token['start'] );
+			$new = null;
+			if ( 'title' === $token['name'] ) {
+				$new = $plain( $raw, 'title' );
+				$new = is_string( $new ) ? esc_html( $new ) : null;
+			} elseif ( $jsonld ) {
+				$new = translate_json_ld( $raw, $translate, $link );
+			}
 			if ( is_string( $new ) ) {
-				$edits[ $token['start'] ] = array( $token['end'], esc_html( $new ) );
+				$edits[ $token['start'] ] = array( $token['end'], $new );
 			}
 			continue;
 		}
 		if ( 'tag' !== $token['type'] || $token['closing'] || $token['skip'] ) {
 			continue;
 		}
-		$attrs = $token['attrs'];
-		$names = TEXT_ATTRIBUTES;
+		$attrs  = $token['attrs'];
+		$jsonld = 'script' === $token['name'] && 'application/ld+json' === strtolower( $attrs['type']['value'] ?? '' );
+		$names  = TEXT_ATTRIBUTES;
 		if ( 'input' === $token['name'] && in_array( strtolower( $attrs['type']['value'] ?? '' ), array( 'submit', 'button', 'reset' ), true ) ) {
 			$names[] = 'value';
 		}
@@ -349,12 +362,9 @@ function translate_tags( $html, callable $translate, $link = null ) {
 			$names[] = 'content';
 		}
 		foreach ( $names as $name ) {
-			if ( ! isset( $attrs[ $name ] ) || '' === trim( $attrs[ $name ]['value'] ) || ! has_words( $attrs[ $name ]['value'] ) ) {
-				continue;
-			}
-			$new = $translate( normalize( $attrs[ $name ]['value'] ), 'attr' );
+			$new = isset( $attrs[ $name ] ) ? $plain( $attrs[ $name ]['value'], 'attr' ) : null;
 			if ( is_string( $new ) ) {
-				$edits[ $attrs[ $name ]['start'] ] = array( $attrs[ $name ]['end'], quote_value( $new, $attrs[ $name ]['quote'] ) );
+				$edits[ $attrs[ $name ]['start'] ] = array( $attrs[ $name ]['end'], quote_value( esc_attr( $new ), $attrs[ $name ]['quote'] ) );
 			}
 		}
 		// Links that name their language (the switcher, alternates) already point where they should.
@@ -382,16 +392,55 @@ function translate_tags( $html, callable $translate, $link = null ) {
 }
 
 /**
- * Make a value safe inside its original quotes.
+ * Translate a JSON-LD block: the readable properties (data/json-ld.json) through $translate, the
+ * URL properties through $link. Returns the new JSON, or null when nothing changed or it is not JSON.
  *
- * @param string $value Value (may contain entities).
- * @param string $quote The quote character, or '' for an unquoted value.
+ * @param string        $json      JSON-LD.
+ * @param callable      $translate Callback returning the new plain text or null.
+ * @param callable|null $link      Callback returning the new URL.
  */
-function quote_value( $value, $quote ) {
-	$value = str_replace( array( '"', "'" ), array( '&quot;', '&#039;' ), $value );
-	return '' === $quote && preg_match( '/[\s>=`]/', $value ) ? '"' . $value . '"' : $value;
+function translate_json_ld( $json, callable $translate, $link = null ) {
+	static $keys = null;
+	if ( null === $keys ) {
+		$keys = json_decode( (string) file_get_contents( dirname( FILE ) . '/data/json-ld.json' ), true );
+	}
+	$data = json_decode( $json, true );
+	if ( ! is_array( $data ) ) {
+		return null;
+	}
+	$changed = false;
+	$walk    = function ( &$node ) use ( &$walk, &$changed, $keys, $translate, $link ) {
+		foreach ( $node as $key => &$value ) {
+			if ( is_array( $value ) ) {
+				$walk( $value );
+			} elseif ( is_string( $value ) && in_array( $key, $keys['text'], true ) && has_words( $value ) ) {
+				$new = $translate( normalize( $value ), 'attr' );
+				if ( is_string( $new ) ) {
+					$value   = $new;
+					$changed = true;
+				}
+			} elseif ( is_string( $value ) && $link && in_array( $key, $keys['url'], true ) ) {
+				$new = $link( $value );
+				if ( $new !== $value ) {
+					$value   = $new;
+					$changed = true;
+				}
+			}
+		}
+	};
+	$walk( $data );
+	return $changed ? str_replace( '</', '<\/', wp_json_encode( $data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) ) : null;
 }
 
+/**
+ * Quote an escaped value when its attribute had no quotes.
+ *
+ * @param string $value Escaped value.
+ * @param string $quote The original quote character, or '' for an unquoted value.
+ */
+function quote_value( $value, $quote ) {
+	return '' === $quote && preg_match( '/[\s>=`"\']/', $value ) ? '"' . $value . '"' : $value;
+}
 /**
  * Every unit of a page: source => kind.
  *

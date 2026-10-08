@@ -102,6 +102,7 @@ function record_page( $page, array $units ) {
 		$wpdb->insert( $t['pages'], array( 'string_id' => $id, 'page' => $page, 'position' => $position ) );
 	}
 	wp_cache_delete( 'pages', 'langsail' );
+	do_action( 'langsail_page_scanned', $page, $new );
 	return $new;
 }
 
@@ -144,6 +145,7 @@ function save_translations( $locale, array $translations, $status = 'translated'
 		}
 	}
 	wp_cache_delete( 'dict_' . $locale, 'langsail' );
+	do_action( 'langsail_translations_saved', $locale );
 }
 
 /** Pages with strings: page => count. */
@@ -230,4 +232,25 @@ function progress( array $locales ) {
 		'total' => $total,
 		'done'  => $done,
 	);
+}
+
+/**
+ * Translation progress of one page: its number of strings and, per locale, how many are translated.
+ *
+ * @param string $page Page key.
+ * @return array{total: int, done: array<string, int>}
+ */
+function page_progress( $page ) {
+	global $wpdb;
+	static $cache = array();
+	if ( ! isset( $cache[ $page ] ) ) {
+		$t              = tables();
+		$total          = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$t['pages']} WHERE page = %s", $page ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
+		$rows           = $wpdb->get_results( $wpdb->prepare( "SELECT t.locale, COUNT(*) AS n FROM {$t['pages']} p JOIN {$t['translations']} t ON t.string_id = p.string_id AND t.status = 'translated' WHERE p.page = %s GROUP BY t.locale", $page ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names.
+		$cache[ $page ] = array(
+			'total' => $total,
+			'done'  => array_map( 'intval', array_column( $rows, 'n', 'locale' ) ),
+		);
+	}
+	return $cache[ $page ];
 }

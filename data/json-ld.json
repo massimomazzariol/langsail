@@ -1,0 +1,5 @@
+{
+	"_note": "JSON-LD properties LangSail treats as readable text (translated) and as URLs of the site (moved into the page language). schema.org names.",
+	"text": [ "name", "alternateName", "description", "headline", "alternativeHeadline", "caption", "text", "slogan", "disambiguatingDescription", "abstract", "articleBody" ],
+	"url": [ "url", "@id", "urlTemplate", "item", "mainEntityOfPage", "target" ]
+}

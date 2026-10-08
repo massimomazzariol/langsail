@@ -281,7 +281,7 @@ function save_strings() {
 			}
 			$text = trim( $text );
 			if ( '' === $text || 'text' !== $string['kind'] ) {
-				$clean[ $string['id'] ] = esc_html( $text );
+				$clean[ $string['id'] ] = sanitize_text_field( $text ); // Plain text: escaped where it is output.
 				continue;
 			}
 			$html = from_placeholders( $text, $string['source'] );

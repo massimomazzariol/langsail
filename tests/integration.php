@@ -78,6 +78,11 @@ try {
 	$check( str_contains( $out, '<h2> Titolo qui </h2>' ), 'Whitespace around a unit is kept' );
 	$check( str_contains( $out, 'alt="Un&#039;auto &quot;rossa&quot;"' ) && str_contains( $out, 'content="Corse a Venezia"' ), 'Attribute translations are escaped for their quotes' );
 	$check( str_contains( $out, '<script>var s = "Hello script";</script>' ) && str_contains( $out, '<p translate="no">Brand Name</p>' ), 'Untranslated parts are byte for byte the same' );
+	$ld   = '<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"' . home_url( '/' ) . '","url":"' . home_url( '/' ) . '","name":"Venice & Treviso","inLanguage":"en-US"}]}</script><meta property="og:title" content="Venice &amp; Treviso">';
+	$seen = units( $ld );
+	$check( array( 'Venice & Treviso' => 'attr' ) === $seen, 'JSON-LD texts and attributes share one unit when their decoded text is the same' );
+	$out2 = translate_tags( $ld, fn( $s ) => 'Venice & Treviso' === $s ? 'Venezia e <Treviso>' : null, fn( $url ) => localize_url( $url, 'it_IT' ) );
+	$check( str_contains( $out2, '"name":"Venezia e <Treviso>"' ) && str_contains( $out2, '"url":"' . home_url( '/it/' ) . '"' ) && str_contains( $out2, 'content="Venezia e &lt;Treviso&gt;"' ), 'JSON-LD names and URLs are translated, attributes are escaped' );
 	$same = translate_tags( translate_text( $html, fn() => null ), fn() => null );
 	$check( $same === $html, 'With no translations the document is unchanged' );
 	$switch = '<a href="' . esc_url( home_url( '/' ) ) . '" hreflang="en">English</a>';
@@ -117,6 +122,13 @@ try {
 	$check( 'Frase di prova LangSail uno.' === ( dictionary( 'it_IT' )[ md5( 'LangSail test sentence one.' ) ] ?? '' ), 'Saved translations are in the dictionary' );
 	$check( 1 === (int) query_strings( array( 'page' => $page, 'status' => 'missing', 'locales' => array( 'it_IT', 'es_ES' ) ) )['total'], 'A text missing in any language is listed as missing' );
 	$check( '<p>Frase di prova LangSail uno.</p>' === translate_html( '<p>LangSail test sentence one.</p>', 'it_IT' ), 'Pages are translated from the dictionary' );
+
+	// Indexing readiness and sitemap.
+	$check( is_ready( 'en_US', $page ) && ! is_ready( 'es_ES', $page ) && is_ready( 'it_IT', $page ), 'A page is indexable in a language once all its texts are translated (default threshold 100%)' );
+	$check( ! is_ready( 'it_IT', '/never-scanned/' ), 'A page never scanned is not indexable in a translation' );
+	$map_xml = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' . home_url( $page ) . '</loc><lastmod>2026-10-08</lastmod></url><url><loc>https://example.com/x/</loc></url></urlset>';
+	$map_out = localize_sitemap( $map_xml );
+	$check( str_contains( $map_out, 'xmlns:xhtml=' ) && 2 === substr_count( $map_out, '<loc>' . esc_url( home_url( $page ) ) ) + substr_count( $map_out, '<loc>' . esc_url( home_url( '/it' . $page ) ) ) && ! str_contains( $map_out, home_url( '/es' . $page ) ) && str_contains( $map_out, 'hreflang="x-default"' ) && str_contains( $map_out, '<loc>https://example.com/x/</loc>' ), 'The sitemap lists every ready language version with alternates and leaves other hosts alone' );
 
 	// Real pages: scan the home page, translate one of its texts, read it in Italian.
 	$http     = array( 'timeout' => 60 ); // Local sites can be slow on a cold request.

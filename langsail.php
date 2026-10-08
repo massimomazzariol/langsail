@@ -30,6 +30,7 @@ require_once __DIR__ . '/includes/placeholders.php';
 require_once __DIR__ . '/includes/store.php';
 require_once __DIR__ . '/includes/frontend.php';
 require_once __DIR__ . '/includes/switcher.php';
+require_once __DIR__ . '/includes/integrations.php';
 
 if ( is_admin() ) {
 	require_once __DIR__ . '/includes/admin-settings.php';

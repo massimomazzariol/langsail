@@ -7,4 +7,5 @@
 - Text units found in the rendered page: text runs with their phrasing tags, readable attributes, page title and SEO meta. Wrapping and decorative elements stay out of the unit; translate="no" and notranslate are honored.
 - Translation table with page and status filters, search, progress per language and a site scan; markers instead of HTML, validated on save.
 - Pages translated on output, untranslated texts fall back to the base language; internal and canonical links localized; hreflang alternates with x-default.
-- Language switcher block.
+- Language switcher block: native names or codes, optional flags (circle-flags language set, MIT); flags also in the admin.
+- SEO: attribute, title and JSON-LD texts are plain-text units shared across them; JSON-LD names and URLs translated; a language version is indexed (hreflang, sitemap) only once the threshold share of its page is translated, otherwise sent with X-Robots-Tag noindex; language versions added to The SEO Framework sitemap and to XML sitemaps that pass through output buffers.

@@ -53,8 +53,8 @@ function prefixes( array $locales ) {
 }
 
 /**
- * Validate stored or submitted settings ( base, confirmed, languages: locale list, names:
- * locale => native name ). Invalid or duplicate locales, and the base among the translations, are dropped.
+ * Validate stored or submitted settings ( base, confirmed, threshold: percent of a page that must be
+ * translated before that language version is indexed, languages: locale list, names: locale => native name ). Invalid or duplicate locales, and the base among the translations, are dropped.
  *
  * @param mixed $value Settings array.
  */
@@ -91,6 +91,7 @@ function normalize_settings( $value ) {
 		'base'      => $base,
 		'base_name' => $names[ $base ] ?? $base,
 		'confirmed' => ! empty( $value['confirmed'] ),
+		'threshold' => isset( $value['threshold'] ) && is_numeric( $value['threshold'] ) ? max( 0, min( 100, (int) $value['threshold'] ) ) : 100,
 		'languages' => $languages,
 		'names'     => array_intersect_key( $names, array_flip( array_merge( array( $base ), $locales ) ) ),
 	);
@@ -105,6 +106,7 @@ function stored_settings( array $settings ) {
 	return array(
 		'base'      => $settings['base'],
 		'confirmed' => $settings['confirmed'],
+		'threshold' => $settings['threshold'],
 		'languages' => array_keys( $settings['languages'] ),
 		'names'     => $settings['names'],
 	);
