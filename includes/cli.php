@@ -50,10 +50,10 @@ class CLI {
 	 * ## OPTIONS
 	 *
 	 * <file>
-	 * : A LangSail .json export, or a .po file.
+	 * : A LangSail .json export, a translation map (.json, one language) or a .po file.
 	 *
 	 * [--locale=<locale>]
-	 * : Language of a .po file.
+	 * : Language of a .po file or a translation map.
 	 *
 	 * @param array $args       Positional arguments.
 	 * @param array $assoc_args Options.
@@ -63,7 +63,7 @@ class CLI {
 		if ( false === $content ) {
 			\WP_CLI::error( "Cannot read {$args[0]}" );
 		}
-		$result = str_ends_with( strtolower( $args[0] ), '.po' ) ? import_po( $content, $assoc_args['locale'] ?? '' ) : import_json( json_decode( $content, true ) );
+		$result = import_file( $args[0], $content, $assoc_args['locale'] ?? '' );
 		if ( is_wp_error( $result ) ) {
 			\WP_CLI::error( $result->get_error_message() );
 		}

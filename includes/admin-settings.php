@@ -99,6 +99,13 @@ function settings_page() {
 						<p class="description" id="langsail-threshold-help"><?php esc_html_e( 'A language version of a page is offered to search engines (hreflang, sitemap) only when at least this share of its texts is translated; until then it is marked noindex.', 'langsail' ); ?></p>
 					</td>
 				</tr>
+				<tr>
+					<th scope="row"><label for="langsail-keep"><?php esc_html_e( 'Never translate', 'langsail' ); ?></label></th>
+					<td>
+						<textarea id="langsail-keep" name="keep" rows="5" class="large-text" aria-describedby="langsail-keep-help"><?php echo esc_textarea( implode( "\n", $settings['keep'] ) ); ?></textarea>
+						<p class="description" id="langsail-keep-help"><?php esc_html_e( 'One text per line: brand names, codes, addresses. A text exactly like one of these stays as it is in every language and is not listed in the translation table.', 'langsail' ); ?></p>
+					</td>
+				</tr>
 				<?php if ( $settings['languages'] ) : ?>
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Addresses', 'langsail' ); ?></th>
@@ -145,6 +152,7 @@ function save_settings() {
 			'base'      => $base,
 			'confirmed' => true,
 			'threshold' => isset( $_POST['threshold'] ) ? absint( $_POST['threshold'] ) : $current['threshold'],
+			'keep'      => isset( $_POST['keep'] ) ? preg_split( '/\R/', wp_unslash( $_POST['keep'] ) ) : $current['keep'], // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each line sanitized in normalize_settings().
 			'languages' => $languages,
 			'names'     => $names,
 		)

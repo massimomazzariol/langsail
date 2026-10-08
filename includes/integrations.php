@@ -52,6 +52,7 @@ function tsf_clear_sitemap() {
 add_filter( 'fluentform/form_vars_for_JS', __NAMESPACE__ . '\\fluentform_vars', 10, 2 );
 add_filter( 'fluentform/validations', __NAMESPACE__ . '\\fluentform_validations' );
 add_filter( 'fluentform/integration_feed_before_parse', __NAMESPACE__ . '\\fluentform_visitor_email' );
+add_filter( 'fluentform/date_i18n', __NAMESPACE__ . '\\fluentform_date_labels' );
 
 /**
  * Translate the browser validation messages of a form, and record its confirmation message while
@@ -126,4 +127,21 @@ function fluentform_validations( $validations ) {
 		}
 	}
 	return $validations;
+}
+
+/**
+ * The date picker's screen reader labels (month, year, hour, minute) are not in Fluent Forms'
+ * translations: add flatpickr's defaults (data/flatpickr.json) through the translation table.
+ *
+ * @param array $i18n flatpickr locale.
+ */
+function fluentform_date_labels( $i18n ) {
+	$labels = json_decode( (string) file_get_contents( dirname( FILE ) . '/data/flatpickr.json' ), true );
+	unset( $labels['_note'] );
+	foreach ( (array) $labels as $key => $text ) {
+		if ( ! isset( $i18n[ $key ] ) ) {
+			$i18n[ $key ] = translate( $text );
+		}
+	}
+	return $i18n;
 }

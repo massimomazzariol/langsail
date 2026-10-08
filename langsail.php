@@ -44,6 +44,8 @@ if ( is_admin() ) {
 }
 
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\activate' );
+add_filter( 'pre_update_option_active_plugins', __NAMESPACE__ . '\\load_first' );
+add_action( 'admin_init', __NAMESPACE__ . '\\ensure_load_first' );
 
 // The language is read from the URL before WordPress parses the request or loads any translation.
 boot_router();
@@ -53,5 +55,28 @@ function activate() {
 	install_tables();
 	if ( false === get_option( OPTION ) ) {
 		add_option( OPTION, stored_settings( normalize_settings( array( 'base' => get_locale() ) ) ) );
+	}
+}
+
+/**
+ * Keep LangSail first among the active plugins: it sets the request language before any other
+ * plugin loads its translations (WordPress loads plugins in this order).
+ *
+ * @param mixed $plugins Active plugins.
+ */
+function load_first( $plugins ) {
+	$self = plugin_basename( FILE );
+	if ( is_array( $plugins ) && in_array( $self, $plugins, true ) ) {
+		$plugins = array_values( array_diff( $plugins, array( $self ) ) );
+		array_unshift( $plugins, $self );
+	}
+	return $plugins;
+}
+
+/** Move LangSail to the front if it is not there (sites where it was activated before this rule). */
+function ensure_load_first() {
+	$plugins = (array) get_option( 'active_plugins', array() );
+	if ( $plugins && plugin_basename( FILE ) !== reset( $plugins ) ) {
+		update_option( 'active_plugins', $plugins );
 	}
 }

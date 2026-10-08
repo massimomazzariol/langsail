@@ -169,7 +169,7 @@ function strings_page() {
 				<?php wp_nonce_field( 'langsail_import' ); ?>
 				<label for="langsail-import-file"><?php esc_html_e( 'File (.json or .po)', 'langsail' ); ?></label>
 				<input type="file" id="langsail-import-file" name="file" accept=".json,.po" required>
-				<label for="langsail-import-locale"><?php esc_html_e( 'Language of a .po file', 'langsail' ); ?></label>
+				<label for="langsail-import-locale"><?php esc_html_e( 'Language of a .po file or a map', 'langsail' ); ?></label>
 				<select id="langsail-import-locale" name="locale">
 					<?php foreach ( $languages as $locale => $language ) : ?>
 						<option value="<?php echo esc_attr( $locale ); ?>"><?php echo esc_html( $language['name'] ); ?></option>
@@ -356,7 +356,7 @@ function upload_import() {
 	$name    = is_array( $file ) ? strtolower( (string) ( $file['name'] ?? '' ) ) : '';
 	$content = is_array( $file ) && UPLOAD_ERR_OK === ( $file['error'] ?? -1 ) && is_uploaded_file( $file['tmp_name'] ) ? file_get_contents( $file['tmp_name'] ) : false; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Uploaded file.
 	$result  = false === $content ? new \WP_Error( 'langsail_import', __( 'The file could not be read.', 'langsail' ) )
-		: ( str_ends_with( $name, '.po' ) ? import_po( $content, sanitize_locale( wp_unslash( $_POST['locale'] ?? '' ) ) ) : import_json( json_decode( $content, true ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Whitelisted format.
+		: import_file( $name, $content, sanitize_locale( wp_unslash( $_POST['locale'] ?? '' ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Whitelisted format.
 	$user    = get_current_user_id();
 	if ( is_wp_error( $result ) ) {
 		set_transient( 'langsail_errors_' . $user, array( $result->get_error_message() ), HOUR_IN_SECONDS );

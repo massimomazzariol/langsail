@@ -1,0 +1,8 @@
+{
+	"_note": "flatpickr's own screen reader labels (its English defaults), passed through the translation table for forms that use the flatpickr date picker.",
+	"monthAriaLabel": "Month",
+	"yearAriaLabel": "Year",
+	"hourAriaLabel": "Hour",
+	"minuteAriaLabel": "Minute",
+	"toggleTitle": "Click to toggle"
+}

@@ -54,7 +54,8 @@ function prefixes( array $locales ) {
 
 /**
  * Validate stored or submitted settings ( base, confirmed, threshold: percent of a page that must be
- * translated before that language version is indexed, languages: locale list, names: locale => native name ). Invalid or duplicate locales, and the base among the translations, are dropped.
+ * translated before that language version is indexed, keep: texts never translated (brands, codes),
+ * languages: locale list, names: locale => native name ). Invalid or duplicate locales, and the base among the translations, are dropped.
  *
  * @param mixed $value Settings array.
  */
@@ -92,6 +93,7 @@ function normalize_settings( $value ) {
 		'base_name' => $names[ $base ] ?? $base,
 		'confirmed' => ! empty( $value['confirmed'] ),
 		'threshold' => isset( $value['threshold'] ) && is_numeric( $value['threshold'] ) ? max( 0, min( 100, (int) $value['threshold'] ) ) : 100,
+		'keep'      => array_values( array_unique( array_filter( array_map( fn( $line ) => normalize( sanitize_text_field( (string) $line ) ), (array) ( $value['keep'] ?? array() ) ) ) ) ),
 		'languages' => $languages,
 		'names'     => array_intersect_key( $names, array_flip( array_merge( array( $base ), $locales ) ) ),
 	);
@@ -107,6 +109,7 @@ function stored_settings( array $settings ) {
 		'base'      => $settings['base'],
 		'confirmed' => $settings['confirmed'],
 		'threshold' => $settings['threshold'],
+		'keep'      => $settings['keep'],
 		'languages' => array_keys( $settings['languages'] ),
 		'names'     => $settings['names'],
 	);
@@ -203,4 +206,14 @@ function flag_url( $locale ) {
 function flag_img( $locale, $class = 'langsail-flag' ) {
 	$url = flag_url( $locale );
 	return '' === $url ? '' : sprintf( '<img class="%s" src="%s" alt="" width="20" height="20" loading="lazy" decoding="async">', esc_attr( $class ), esc_url( $url ) );
+}
+
+/**
+ * Whether a text is on the "never translate" list (brand names, codes): compared as plain text.
+ *
+ * @param string $source Unit (HTML or plain).
+ */
+function is_kept( $source ) {
+	$keep = settings()['keep'];
+	return $keep && in_array( normalize( html_entity_decode( wp_strip_all_tags( $source ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ), $keep, true );
 }

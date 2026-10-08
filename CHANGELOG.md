@@ -14,3 +14,7 @@
 - Integrations: Mintchat pre-filled message (mintchat_message), Fluent Forms browser and server validation messages, confirmation message, and emails sent to the visitor (recipient from a form field) in the visitor's language; emails to fixed addresses keep the base language.
 - Readable attributes are listed in data/attributes.json (names and prefixes, data-label-* included); units made only of merge placeholders like {all_data} are skipped.
 - Import and export: JSON with every text and language (moves translations between sites), PO per language with markers and fuzzy entries; WP-CLI wp langsail export, import, stats.
+- Unit keys treat language-specific quote marks as one (WordPress writes them differently per language), so texts match on every language version.
+- LangSail keeps itself first among active plugins, so the request language is set before other plugins load their translations.
+- Never-translate list in the settings (brands, codes); link-tag titles are not collected; empty icons inside wrapped links stay out of units.
+- Translation maps (.json, source text to translation) import into one language; date picker screen reader labels (data/flatpickr.json) for Fluent Forms.

@@ -27,8 +27,8 @@ $check           = static function ( $condition, $description ) use ( &$langsail
 $cleanup = static function () {
 	global $wpdb;
 	$t = tables();
-	$wpdb->query( $wpdb->prepare( "DELETE FROM {$t['pages']} WHERE page = %s", '/langsail-test-page/' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
-	foreach ( array( 'LangSail test sentence one.', 'LangSail test alt' ) as $source ) {
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$t['pages']} WHERE page IN (%s, %s)", '/langsail-test-page/', '/langsail-keep-test/' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
+	foreach ( array( 'LangSail test sentence one.', 'LangSail test alt', 'LangSail keep test' ) as $source ) {
 		$id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$t['strings']} WHERE hash = %s", md5( $source ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
 		$wpdb->delete( $t['translations'], array( 'string_id' => $id ) );
 		$wpdb->delete( $t['strings'], array( 'id' => $id ) );
@@ -96,6 +96,19 @@ try {
 
 	$check( array( 'Your request: {inputs.pickup}' => 'text' ) === units( '<p>{all_data}</p><p>Your request: {inputs.pickup}</p>' ), 'Units made only of merge placeholders are skipped' );
 
+	$check( array( '[1]WhatsApp[/1] [2](opens in a new tab)[/2]' ) === array_map( fn( $s ) => to_placeholders( $s )['text'], array_keys( units( "<a href='#'>
+  <span class='icon' aria-hidden='true'></span>
+  <span class='label'>WhatsApp</span>
+  <span class='sr'>(opens in a new tab)</span>
+</a>" ) ) ), 'An empty icon inside a link with whitespace around is left out of the unit' );
+
+	$check( array() === units( '<link rel="alternate" title="Site &raquo; Feed" href="/feed/">' ), 'Titles of <link> tags are not units' );
+	$kept = normalize_settings( array( 'keep' => array( " Acme's  Cab ", '', 'VCE', 'VCE' ) ) )['keep'];
+	$check( array( "Acme's Cab", 'VCE' ) === $kept, 'The never-translate list is trimmed and deduplicated' );
+
+	$check( normalize( '&#171;Ciao&#187; e &#8220;ciao&#8221;' ) === normalize( '"Ciao" e "ciao"' ) && normalize( 'Acme&#8217;s' ) === normalize( "Acme's" ), 'Quotes written the way each language does match the same unit' );
+	$check( array( plugin_basename( FILE ), 'a/a.php', 'z/z.php' ) === load_first( array( 'a/a.php', plugin_basename( FILE ), 'z/z.php' ) ), 'LangSail is kept first among the active plugins' );
+
 	// Placeholders.
 	$source = 'Hello <a href="/about/">our <strong>team</strong></a> &amp; friends<br>today.';
 	$shown  = to_placeholders( $source );
@@ -117,6 +130,9 @@ try {
 	$check( str_contains( $coded, '<img class="langsail-flag"' ) && str_contains( $coded, 'alt=""' ) && str_contains( $coded, '<span>RU</span><span class="screen-reader-text"> Русский</span>' ), 'With flags and codes, flags are decorative and the accessible name is the code plus the full name' );
 
 	// Storage and dictionary.
+	update_option( OPTION, array_merge( get_option( OPTION ), array( 'keep' => array( 'Brand Name Kept' ) ) ) );
+	settings( true );
+	$check( 1 === record_page( '/langsail-keep-test/', array( 'Brand Name Kept' => 'text', '<strong>Brand Name Kept</strong>' => 'text', 'LangSail keep test' => 'attr' ) ) && is_kept( '<strong>Brand Name Kept</strong>' ), 'Never-translate texts are not recorded, with or without formatting' );
 	$page = '/langsail-test-page/';
 	$new  = record_page( $page, array( 'LangSail test sentence one.' => 'text', 'LangSail test alt' => 'attr' ) );
 	$check( 2 === $new && 2 === pages()[ $page ], 'Scanned units are stored and linked to their page' );
@@ -142,6 +158,9 @@ try {
 	$row       = current( query_strings( array( 'page' => $page, 'locales' => array( 'ru_RU' ) ) )['rows'] );
 	$check( ! is_wp_error( $po_import ) && 1 === $po_import['translations'] && 'review' === ( $row['translations']['ru_RU']['status'] ?? '' ), 'A fuzzy PO entry is imported as "to review"' );
 	$check( is_wp_error( import_po( '', 'de_DE' ) ), 'A PO file for a language the site does not have is refused' );
+	$mapped = import_file( 'it.json', wp_json_encode( array( '_note' => 'ignored', 'LangSail test sentence one.' => 'Frase dalla mappa.' ) ), 'it_IT' );
+	$check( ! is_wp_error( $mapped ) && 1 === $mapped['translations'] && 'Frase dalla mappa.' === ( dictionary( 'it_IT' )[ md5( 'LangSail test sentence one.' ) ] ?? '' ), 'A translation map (source text to translation) imports into one language' );
+	save_translations( 'it_IT', array( $row['id'] => 'Frase di prova LangSail uno.' ) );
 
 	// API and background responses.
 	$check( 'LangSail test sentence one.' === apply_filters( 'langsail_translate', 'LangSail test sentence one.' ), 'Outside a translated request the API returns the text unchanged' );

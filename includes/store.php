@@ -86,6 +86,9 @@ function record_page( $page, array $units ) {
 	$new   = 0;
 	$ids   = array();
 	foreach ( $units as $source => $kind ) {
+		if ( is_kept( $source ) ) {
+			continue; // Never translated: not listed, not counted.
+		}
 		$hash = md5( $source );
 		$id   = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$t['strings']} WHERE hash = %s", $hash ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
 		if ( $id ) {

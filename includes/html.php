@@ -116,11 +116,19 @@ function attributes( $source, $offset ) {
 }
 
 /**
- * The key of a unit: whitespace collapsed, trimmed.
+ * The key of a unit: whitespace collapsed, trimmed, and typographic quotes in one form. WordPress
+ * writes quotes the way each language does (“ ” in English, « » in Italian or Russian), so the same
+ * sentence must match whatever language the page was rendered in.
  *
  * @param string $text Unit HTML or attribute value.
  */
 function normalize( $text ) {
+	static $quotes = null;
+	if ( null === $quotes ) {
+		$quotes = json_decode( (string) file_get_contents( dirname( FILE ) . '/data/quotes.json' ), true );
+	}
+	$text = str_replace( $quotes['double'], '"', $text );
+	$text = str_replace( $quotes['single'], "'", $text );
 	return trim( preg_replace( '/\s+/u', ' ', $text ) );
 }
 
@@ -189,14 +197,22 @@ function translate_run( $html, array $run, callable $translate ) {
 		return substr( $html, $from, $to - $from );
 	}
 
+	$words = fn( $a, $b ) => has_words( substr( $html, $run[ $a ]['start'], $run[ $b ]['end'] - $run[ $a ]['start'] ) );
+	$blank = fn( $i ) => 'text' === $run[ $i ]['type'] && '' === trim( substr( $html, $run[ $i ]['start'], $run[ $i ]['end'] - $run[ $i ]['start'] ) );
+
 	// A unit wholly wrapped in phrasing tags (a menu link, a label span) is translated inside them.
 	while ( $first < $last && 'tag' === $run[ $first ]['type'] && ! $run[ $first ]['closing'] && 'tag' === $run[ $last ]['type'] && $run[ $last ]['closing'] && $run[ $first ]['name'] === $run[ $last ]['name'] && balanced( array_slice( $run, $first + 1, $last - $first - 1 ) ) ) {
 		++$first;
 		--$last;
+		while ( $first < $last && $blank( $first ) ) {
+			++$first;
+		}
+		while ( $last > $first && $blank( $last ) ) {
+			--$last;
+		}
 	}
+
 	// Decorative elements at either end (a bullet, an icon span: no words inside) stay out of the unit.
-	$words = fn( $a, $b ) => has_words( substr( $html, $run[ $a ]['start'], $run[ $b ]['end'] - $run[ $a ]['start'] ) );
-	$blank = fn( $i ) => 'text' === $run[ $i ]['type'] && '' === trim( substr( $html, $run[ $i ]['start'], $run[ $i ]['end'] - $run[ $i ]['start'] ) );
 	do {
 		$trimmed = false;
 		$close   = 'tag' === $run[ $first ]['type'] && ! $run[ $first ]['closing'] ? matching_close( $run, $first, $last ) : null;
@@ -354,7 +370,8 @@ function translate_tags( $html, callable $translate, $link = null ) {
 		}
 		$attrs  = $token['attrs'];
 		$jsonld = 'script' === $token['name'] && 'application/ld+json' === strtolower( $attrs['type']['value'] ?? '' );
-		$names  = text_attributes( array_keys( $attrs ) );
+		// <link> titles (feeds, oEmbed) are metadata nobody reads on the page.
+		$names  = 'link' === $token['name'] ? array() : text_attributes( array_keys( $attrs ) );
 		if ( 'input' === $token['name'] && in_array( strtolower( $attrs['type']['value'] ?? '' ), array( 'submit', 'button', 'reset' ), true ) ) {
 			$names[] = 'value';
 		}

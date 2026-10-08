@@ -215,6 +215,38 @@ function parse_po( $po ) {
  * @return array{translations: int, errors: string[]}|\WP_Error
  */
 function import_po( $po, $locale ) {
+	return import_entries( parse_po( $po ), $locale );
+}
+
+/**
+ * Import a translation map into one language: { "text as translators see it": "translation" }.
+ * A simple format for translators and tools; the same matching as PO files.
+ *
+ * @param mixed  $map    Decoded JSON object.
+ * @param string $locale Locale.
+ * @return array{translations: int, errors: string[]}|\WP_Error
+ */
+function import_map( $map, $locale ) {
+	if ( ! is_array( $map ) ) {
+		return new \WP_Error( 'langsail_import', __( 'This is not a translation map.', 'langsail' ) );
+	}
+	$entries = array();
+	foreach ( $map as $msgid => $msgstr ) {
+		if ( is_string( $msgid ) && '_' !== substr( $msgid, 0, 1 ) && is_string( $msgstr ) ) {
+			$entries[] = array( 'msgid' => $msgid, 'msgstr' => $msgstr, 'fuzzy' => false );
+		}
+	}
+	return import_entries( $entries, $locale );
+}
+
+/**
+ * Write entries (msgid as translators see the text, msgstr, fuzzy) into one language.
+ *
+ * @param array  $entries Entries.
+ * @param string $locale  Locale.
+ * @return array{translations: int, errors: string[]}|\WP_Error
+ */
+function import_entries( array $entries, $locale ) {
 	global $wpdb;
 	if ( ! isset( settings()['languages'][ $locale ] ) ) {
 		return new \WP_Error( 'langsail_import', __( 'Choose one of the site languages for this file.', 'langsail' ) );
@@ -228,11 +260,12 @@ function import_po( $po, $locale ) {
 		'errors'       => array(),
 	);
 	$save   = array();
-	foreach ( parse_po( $po ) as $entry ) {
-		if ( '' === trim( $entry['msgstr'] ) || ! isset( $targets[ $entry['msgid'] ] ) ) {
+	foreach ( $entries as $entry ) {
+		$msgid = normalize( $entry['msgid'] );
+		if ( '' === trim( $entry['msgstr'] ) || ! isset( $targets[ $msgid ] ) ) {
 			continue;
 		}
-		foreach ( $targets[ $entry['msgid'] ] as $row ) {
+		foreach ( $targets[ $msgid ] as $row ) {
 			$text = 'text' === $row['kind'] ? from_placeholders( $entry['msgstr'], $row['source'] ) : sanitize_text_field( $entry['msgstr'] );
 			if ( is_wp_error( $text ) ) {
 				$result['errors'][] = wp_html_excerpt( $entry['msgid'], 60, '...' ) . ': ' . $text->get_error_message();
@@ -246,4 +279,20 @@ function import_po( $po, $locale ) {
 		save_translations( $locale, $texts, $status );
 	}
 	return $result;
+}
+
+/**
+ * Import any supported file: a LangSail JSON export, a translation map (.json, one language) or a PO file.
+ *
+ * @param string $name    File name (its extension picks the format).
+ * @param string $content File content.
+ * @param string $locale  Language of a PO file or a map.
+ * @return array|\WP_Error
+ */
+function import_file( $name, $content, $locale ) {
+	if ( str_ends_with( strtolower( $name ), '.po' ) ) {
+		return import_po( $content, $locale );
+	}
+	$data = json_decode( $content, true );
+	return is_array( $data ) && isset( $data['format'] ) ? import_json( $data ) : import_map( $data, $locale );
 }
