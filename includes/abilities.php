@@ -58,12 +58,17 @@ function register_abilities() {
 		'langsail/list-languages',
 		array(
 			'label'               => __( 'List languages', 'langsail' ),
-			'description'         => __( 'Lists the base language of the site and the translation languages, each with its locale, URL prefix and how many of the site texts are translated.', 'langsail' ),
+			'description'         => __( 'Start here. Returns the site owner\'s instructions for translators (tone, audience, fixed terms: follow them in every translation), the base language, the texts that must never be translated, and the translation languages with their locale, URL prefix and progress.', 'langsail' ),
 			'category'            => 'langsail',
 			'output_schema'       => array(
 				'type'       => 'object',
 				'properties' => array(
-					'base'      => array( 'type' => 'object' ),
+					'instructions'    => array( 'type' => 'string' ),
+					'never_translate' => array(
+						'type'  => 'array',
+						'items' => array( 'type' => 'string' ),
+					),
+					'base'            => array( 'type' => 'object' ),
 					'texts'     => array( 'type' => 'integer' ),
 					'languages' => array( 'type' => 'array' ),
 				),
@@ -78,7 +83,7 @@ function register_abilities() {
 		'langsail/list-texts',
 		array(
 			'label'               => __( 'List texts to translate', 'langsail' ),
-			'description'         => __( 'Lists texts of the site in the base language with their translation in one language. Markers like [1]...[/1] stand for links and formatting and [2/] for a line break: a translation must keep the same markers around the matching words. Kind "attr" and "title" are plain text. Translate with langsail/save-translations.', 'langsail' ),
+			'description'         => __( 'Lists texts of the site in the base language with their translation in one language. Markers like [1]...[/1] stand for links and formatting and [2/] for a line break: a translation must keep the same markers around the matching words. Kind "attr" and "title" are plain text. Follow the instructions from langsail/list-languages. Translate with langsail/save-translations.', 'langsail' ),
 			'category'            => 'langsail',
 			'input_schema'        => array(
 				'type'                 => 'object',
@@ -225,12 +230,14 @@ function ability_list_languages() {
 	$settings = settings();
 	$progress = progress( locales() );
 	$out      = array(
-		'base'      => array(
+		'instructions'    => $settings['brief'],
+		'never_translate' => $settings['keep'],
+		'base'            => array(
 			'locale' => $settings['base'],
 			'name'   => $settings['base_name'],
 		),
-		'texts'     => $progress['total'],
-		'languages' => array(),
+		'texts'           => $progress['total'],
+		'languages'       => array(),
 	);
 	foreach ( $settings['languages'] as $locale => $language ) {
 		$out['languages'][] = array(

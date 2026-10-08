@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-08T20:11:13+00:00\n"
+"POT-Creation-Date: 2026-10-08T20:49:55+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: langsail\n"
@@ -54,43 +54,43 @@ msgid "List languages"
 msgstr ""
 
 #: includes/abilities.php:61
-msgid "Lists the base language of the site and the translation languages, each with its locale, URL prefix and how many of the site texts are translated."
+msgid "Start here. Returns the site owner's instructions for translators (tone, audience, fixed terms: follow them in every translation), the base language, the texts that must never be translated, and the translation languages with their locale, URL prefix and progress."
 msgstr ""
 
-#: includes/abilities.php:80
+#: includes/abilities.php:85
 msgid "List texts to translate"
 msgstr ""
 
-#: includes/abilities.php:81
-msgid "Lists texts of the site in the base language with their translation in one language. Markers like [1]...[/1] stand for links and formatting and [2/] for a line break: a translation must keep the same markers around the matching words. Kind \"attr\" and \"title\" are plain text. Translate with langsail/save-translations."
-msgstr ""
-
-#: includes/abilities.php:91
-msgid "missing: no translation yet; review: translation kept from an older version of the text, to check; all: every text."
+#: includes/abilities.php:86
+msgid "Lists texts of the site in the base language with their translation in one language. Markers like [1]...[/1] stand for links and formatting and [2/] for a line break: a translation must keep the same markers around the matching words. Kind \"attr\" and \"title\" are plain text. Follow the instructions from langsail/list-languages. Translate with langsail/save-translations."
 msgstr ""
 
 #: includes/abilities.php:96
+msgid "missing: no translation yet; review: translation kept from an older version of the text, to check; all: every text."
+msgstr ""
+
+#: includes/abilities.php:101
 msgid "Only the texts of this page (its path, like /about/). Empty for every page."
 msgstr ""
 
-#: includes/abilities.php:145
+#: includes/abilities.php:150
 #: includes/admin-strings.php:263
 msgid "Save translations"
 msgstr ""
 
-#: includes/abilities.php:146
+#: includes/abilities.php:151
 msgid "Saves translations of texts from langsail/list-texts into one language. Each translation must keep the markers of its source. Translations with wrong markers are not saved and are returned as errors. Use status \"review\" to ask a person to check them."
 msgstr ""
 
-#: includes/abilities.php:194
+#: includes/abilities.php:199
 msgid "Scan the site"
 msgstr ""
 
-#: includes/abilities.php:195
+#: includes/abilities.php:200
 msgid "Visits every page of the site to collect new and changed texts. Run it after content changes, before listing the texts to translate. It can take a while on large sites."
 msgstr ""
 
-#: includes/abilities.php:220
+#: includes/abilities.php:225
 msgid "Not a translation language of this site. See langsail/list-languages."
 msgstr ""
 
@@ -167,30 +167,38 @@ msgid "One text per line: brand names, codes, addresses. A text exactly like one
 msgstr ""
 
 #: includes/admin-settings.php:114
-msgid "Your data"
-msgstr ""
-
-#: includes/admin-settings.php:116
-msgid "Delete all LangSail data when the plugin is deleted"
+msgid "Instructions for AI translators"
 msgstr ""
 
 #: includes/admin-settings.php:117
+msgid "Optional. Who the site is for, the tone, words with a fixed translation. AI agents read this before translating, so every text sounds the same. Example: \"A family bakery. Friendly tone. German: use du. Sourdough is Sauerteig.\""
+msgstr ""
+
+#: includes/admin-settings.php:121
+msgid "Your data"
+msgstr ""
+
+#: includes/admin-settings.php:123
+msgid "Delete all LangSail data when the plugin is deleted"
+msgstr ""
+
+#: includes/admin-settings.php:124
 msgid "Off: deleting the plugin keeps texts, translations and settings, and installing it again brings everything back. On: they are erased for good. Pages are never changed. Export a backup from Translations > Import and export."
 msgstr ""
 
-#: includes/admin-settings.php:122
+#: includes/admin-settings.php:129
 msgid "Addresses"
 msgstr ""
 
-#: includes/admin-settings.php:132
+#: includes/admin-settings.php:139
 msgid "Save settings"
 msgstr ""
 
-#: includes/admin-settings.php:132
+#: includes/admin-settings.php:139
 msgid "Confirm and save"
 msgstr ""
 
-#: includes/admin-settings.php:141
+#: includes/admin-settings.php:148
 msgid "You are not allowed to change these settings."
 msgstr ""
 

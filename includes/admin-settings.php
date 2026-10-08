@@ -111,6 +111,13 @@ function settings_page() {
 					</td>
 				</tr>
 				<tr>
+					<th scope="row"><label for="langsail-brief"><?php esc_html_e( 'Instructions for AI translators', 'langsail' ); ?></label></th>
+					<td>
+						<textarea id="langsail-brief" name="brief" rows="5" class="large-text" aria-describedby="langsail-brief-help"><?php echo esc_textarea( $settings['brief'] ); ?></textarea>
+						<p class="description" id="langsail-brief-help"><?php esc_html_e( 'Optional. Who the site is for, the tone, words with a fixed translation. AI agents read this before translating, so every text sounds the same. Example: "A family bakery. Friendly tone. German: use du. Sourdough is Sauerteig."', 'langsail' ); ?></p>
+					</td>
+				</tr>
+				<tr>
 					<th scope="row"><?php esc_html_e( 'Your data', 'langsail' ); ?></th>
 					<td>
 						<label><input type="checkbox" name="delete" value="1" aria-describedby="langsail-delete-help" <?php checked( $settings['delete'] ); ?>> <?php esc_html_e( 'Delete all LangSail data when the plugin is deleted', 'langsail' ); ?></label>
@@ -164,6 +171,7 @@ function save_settings() {
 			'confirmed' => true,
 			'delete'    => ! empty( $_POST['delete'] ),
 			'threshold' => isset( $_POST['threshold'] ) ? absint( $_POST['threshold'] ) : $current['threshold'],
+			'brief'     => isset( $_POST['brief'] ) ? wp_unslash( $_POST['brief'] ) : $current['brief'], // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized in normalize_settings().
 			'keep'      => isset( $_POST['keep'] ) ? preg_split( '/\R/', wp_unslash( $_POST['keep'] ) ) : $current['keep'], // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each line sanitized in normalize_settings().
 			'languages' => $languages,
 			'names'     => $names,

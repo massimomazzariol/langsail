@@ -6,3 +6,4 @@
 /tests export-ignore
 /README.md export-ignore
 /.wordpress-org export-ignore
+/docs export-ignore

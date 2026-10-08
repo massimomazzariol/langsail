@@ -230,6 +230,13 @@ try {
 		$saved = wp_get_ability( 'langsail/save-translations' )->execute( array( 'locale' => 'it_IT', 'translations' => array( array( 'id' => (int) $other['id'], 'translation' => 'Qualcosa di completamente diverso.' ) ) ) );
 		$check( 1 === $saved['saved'] && 'Qualcosa di completamente diverso.' === dictionary( 'it_IT' )[ md5( 'Something completely different here.' ) ], 'The save-translations ability stores a translation' );
 		$check( is_wp_error( wp_get_ability( 'langsail/list-texts' )->execute( array( 'locale' => 'xx_XX' ) ) ), 'Abilities refuse languages the site does not use' );
+		$brief = settings();
+		update_option( OPTION, stored_settings( normalize_settings( array( 'brief' => "Friendly tone.\nGerman: use du. <b>x</b>" ) + stored_settings( $brief ) ) ) );
+		settings( true );
+		$intro = wp_get_ability( 'langsail/list-languages' )->execute();
+		$check( "Friendly tone.\nGerman: use du. x" === $intro['instructions'] && is_array( $intro['never_translate'] ), 'Agents get the instructions of the site owner (plain text, line breaks kept) and the never-translate list first' );
+		update_option( OPTION, stored_settings( $brief ) );
+		settings( true );
 		wp_set_current_user( 0 );
 		$check( is_wp_error( wp_get_ability( 'langsail/list-languages' )->execute() ), 'Abilities need the translate capability' );
 	}

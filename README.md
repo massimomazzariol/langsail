@@ -18,6 +18,10 @@
   <img alt="License: GPL-2.0-or-later" src="https://img.shields.io/badge/license-GPL--2.0--or--later-blue">
 </p>
 
+<p align="center">
+  <a href="https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/massimomazzariol/langsail/main/.wordpress-org/blueprints/blueprint-github.json"><img alt="Try it in your browser: a demo bakery site in five languages, nothing to install" src="https://img.shields.io/badge/Try%20it%20in%20your%20browser-demo%20in%205%20languages-0d9488?style=for-the-badge&logo=wordpress&logoColor=white"></a>
+</p>
+
 ---
 
 Most multilingual plugins copy every page once per language: change a layout and you change it four times. LangSail keeps **a single version** of every page, template and menu, written in the base language. Each other language is a translation of its texts, kept in a table. Change the layout once and every language follows.
@@ -95,11 +99,13 @@ New texts are collected by **Scan the site for new texts**, and automatically wh
 
 ## AI agents
 
-LangSail is AI ready without calling any AI itself. It registers its actions on the WordPress Abilities API, so the agent you connect can translate the site through the REST API (`/wp-json/wp-abilities/v1/`) or MCP with the official [WordPress MCP Adapter](https://github.com/WordPress/mcp-adapter).
+LangSail is AI ready without calling any AI itself. It registers its actions on the WordPress Abilities API, so the agent you connect can translate the site through the REST API (`/wp-json/wp-abilities/v1/`) or MCP with the official [WordPress MCP Adapter](https://github.com/WordPress/mcp-adapter). Write **Instructions for AI translators** in the settings (tone, audience, fixed terms): agents read them first, so every text sounds the same.
+
+**Step by step, with the client configuration: [docs/ai-translation.md](docs/ai-translation.md).**
 
 | Ability | What it does |
 | --- | --- |
-| `langsail/list-languages` | Base language, translation languages and how many texts each has translated. Read-only. |
+| `langsail/list-languages` | Your instructions for translators, the never-translate list, base and translation languages with their progress. Read-only. |
 | `langsail/list-texts` | Texts of one language, filtered by missing, to review or all, by page and search, with paging. Read-only. |
 | `langsail/save-translations` | Saves a batch of translations into one language. Translations with wrong markers are rejected and returned as errors. |
 | `langsail/scan` | Visits every page to collect new and changed texts. |
