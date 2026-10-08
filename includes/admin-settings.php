@@ -96,9 +96,9 @@ function settings_page() {
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Addresses', 'langsail' ); ?></th>
 						<td><ul>
-							<li><?php echo esc_html( $settings['base_name'] . ': ' . home_url( '/' ) ); ?></li>
+							<li><?php echo flag_img( $settings['base'] ) . ' ' . esc_html( $settings['base_name'] . ': ' . home_url( '/' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag_img() escapes. ?></li>
 							<?php foreach ( $settings['languages'] as $language ) : ?>
-								<li><?php echo esc_html( $language['name'] . ': ' . home_url( '/' . $language['prefix'] . '/' ) ); ?></li>
+								<li><?php echo flag_img( $language['locale'] ) . ' ' . esc_html( $language['name'] . ': ' . home_url( '/' . $language['prefix'] . '/' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag_img() escapes. ?></li>
 							<?php endforeach; ?>
 						</ul></td>
 					</tr>

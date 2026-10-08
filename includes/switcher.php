@@ -17,25 +17,30 @@ function register_switcher() {
 }
 
 /**
- * The switcher: one link per language to the current page, each name in its own language and
- * marked translate="no" so it is never translated.
+ * The switcher: one link per language to the current page, marked translate="no" so names are
+ * never translated. Options: flags (decorative, the text always stays) and the text as the native
+ * name or the short code; with the code, screen readers still hear the full name.
  *
- * @param string $wrapper Wrapper attributes (already escaped).
+ * @param string $wrapper    Wrapper attributes (already escaped).
+ * @param array  $attributes Block attributes: showFlags, label.
  */
-function switcher_markup( $wrapper = '' ) {
+function switcher_markup( $wrapper = '', array $attributes = array() ) {
 	if ( ! settings()['languages'] ) {
 		return '';
 	}
+	$flags = ! empty( $attributes['showFlags'] );
+	$code  = 'code' === ( $attributes['label'] ?? 'name' );
 	$items = '';
 	foreach ( locales() as $locale ) {
-		$current = current_language() === $locale;
-		$items  .= sprintf(
-			'<li><a href="%s" hreflang="%s" lang="%s" translate="no"%s>%s</a></li>',
+		$name  = esc_html( language_name( $locale ) );
+		$label = $code ? '<span aria-hidden="true">' . esc_html( strtoupper( prefixes( locales() )[ $locale ] ) ) . '</span><span class="screen-reader-text">' . $name . '</span>' : $name;
+		$items .= sprintf(
+			'<li><a href="%1$s" hreflang="%2$s" lang="%2$s" translate="no"%3$s>%4$s%5$s</a></li>',
 			esc_url( current_url_in( $locale ) ),
 			esc_attr( hreflang( $locale ) ),
-			esc_attr( hreflang( $locale ) ),
-			$current ? ' aria-current="true"' : '',
-			esc_html( language_name( $locale ) )
+			current_language() === $locale ? ' aria-current="true"' : '',
+			$flags ? flag_img( $locale ) : '',
+			$label
 		);
 	}
 	return sprintf( '<nav %s aria-label="%s"><ul>%s</ul></nav>', $wrapper ? $wrapper : 'class="wp-block-langsail-switcher"', esc_attr__( 'Language', 'langsail' ), $items );

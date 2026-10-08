@@ -69,3 +69,9 @@
 .langsail-table td.is-review textarea {
 	border-color: var(--langsail-review);
 }
+
+.langsail-flag {
+	width: 1.25em;
+	height: 1.25em;
+	vertical-align: -0.25em;
+}

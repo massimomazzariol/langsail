@@ -100,6 +100,13 @@ try {
 	$check( is_wp_error( from_placeholders( 'Ciao amici', $source ) ) && is_wp_error( from_placeholders( 'Ciao [9]x[/9] [1][2]a[/2][/1]', $source ) ), 'Missing or unknown markers are refused' );
 	$check( 'Ciao [1][2]a[/2][/1]' === translation_placeholders( (string) from_placeholders( 'Ciao [1][2]a[/2][/1]', $source ), $source ), 'Dropping a line break is allowed' );
 
+	// Flags and switcher.
+	$check( str_ends_with( flag_url( 'it_IT' ), '/assets/flags/it.svg' ) && str_ends_with( flag_url( 'en_US' ), '/assets/flags/en-us.svg' ) && str_ends_with( flag_url( 'de_DE_formal' ), '/assets/flags/de.svg' ) && '' === flag_url( 'qqq' ), 'Flags: regional when available, else the language, else none' );
+	$plain = switcher_markup();
+	$coded = switcher_markup( '', array( 'showFlags' => true, 'label' => 'code' ) );
+	$check( str_contains( $plain, '>Italiano</a>' ) && ! str_contains( $plain, '<img' ) && 4 === substr_count( $plain, 'hreflang=' ), 'The switcher lists every language by name, without flags by default' );
+	$check( str_contains( $coded, '<img class="langsail-flag"' ) && str_contains( $coded, 'alt=""' ) && str_contains( $coded, '<span aria-hidden="true">RU</span><span class="screen-reader-text">Русский</span>' ), 'With flags and codes, flags are decorative and screen readers hear the full name' );
+
 	// Storage and dictionary.
 	$page = '/langsail-test-page/';
 	$new  = record_page( $page, array( 'LangSail test sentence one.' => 'text', 'LangSail test alt' => 'attr' ) );

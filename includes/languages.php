@@ -169,3 +169,36 @@ function available_languages() {
 	}
 	return $sorted;
 }
+
+/**
+ * URL of the flag of a locale, from assets/flags (circle-flags language set): the regional flag
+ * when there is one (en-us, pt-br), else the language's (it, ru); '' when none fits.
+ *
+ * @param string $locale Locale.
+ */
+function flag_url( $locale ) {
+	static $found = array();
+	if ( ! isset( $found[ $locale ] ) ) {
+		$found[ $locale ] = '';
+		$parts            = explode( '-', strtolower( str_replace( '_', '-', $locale ) ) );
+		for ( $n = min( 2, count( $parts ) ); $n > 0; $n-- ) {
+			$name = implode( '-', array_slice( $parts, 0, $n ) ) . '.svg';
+			if ( is_readable( dirname( FILE ) . '/assets/flags/' . $name ) ) {
+				$found[ $locale ] = plugins_url( 'assets/flags/' . $name, FILE );
+				break;
+			}
+		}
+	}
+	return $found[ $locale ];
+}
+
+/**
+ * A decorative flag image (the language name is always written next to it), or ''.
+ *
+ * @param string $locale Locale.
+ * @param string $class  CSS class.
+ */
+function flag_img( $locale, $class = 'langsail-flag' ) {
+	$url = flag_url( $locale );
+	return '' === $url ? '' : sprintf( '<img class="%s" src="%s" alt="" width="20" height="20" loading="lazy" decoding="async">', esc_attr( $class ), esc_url( $url ) );
+}

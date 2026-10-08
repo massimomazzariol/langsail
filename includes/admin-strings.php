@@ -17,16 +17,18 @@ add_action( 'admin_enqueue_scripts', __NAMESPACE__ . '\\strings_assets' );
 const PER_PAGE = 50;
 
 /**
- * Load the table styles and the scan script on the Translations screen only.
+ * Load the admin styles on the LangSail screens and the scan script on the Translations screen.
  *
  * @param string $hook Admin screen hook.
  */
 function strings_assets( $hook ) {
+	$base = plugins_url( 'assets/', FILE );
+	if ( in_array( $hook, array( 'toplevel_page_langsail', 'langsail_page_langsail-settings' ), true ) ) {
+		wp_enqueue_style( 'langsail-admin', $base . 'admin.css', array(), VERSION );
+	}
 	if ( 'toplevel_page_langsail' !== $hook ) {
 		return;
 	}
-	$base = plugins_url( 'assets/', FILE );
-	wp_enqueue_style( 'langsail-admin', $base . 'admin.css', array(), VERSION );
 	wp_enqueue_script( 'langsail-admin', $base . 'admin.js', array(), VERSION, array( 'strategy' => 'defer' ) );
 	wp_add_inline_script(
 		'langsail-admin',
@@ -134,7 +136,7 @@ function strings_page() {
 				<?php foreach ( $languages as $locale => $language ) : ?>
 					<?php $percent = $progress['total'] ? (int) floor( 100 * $progress['done'][ $locale ] / $progress['total'] ) : 0; ?>
 					<li>
-						<span><?php echo esc_html( $language['name'] ); ?></span>
+						<span><?php echo flag_img( $locale ) . ' ' . esc_html( $language['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag_img() escapes. ?></span>
 						<progress max="100" value="<?php echo esc_attr( $percent ); ?>" aria-label="<?php echo esc_attr( $language['name'] ); ?>"></progress>
 						<span><?php echo esc_html( $percent . '%' ); ?></span>
 					</li>
@@ -166,7 +168,7 @@ function strings_page() {
 			<?php if ( '' !== $filters['page'] ) : ?>
 				<span class="langsail-view"><?php esc_html_e( 'View this page:', 'langsail' ); ?>
 					<?php foreach ( $languages as $locale => $language ) : ?>
-						<a href="<?php echo esc_url( localize_url( home_url( $filters['page'] ), $locale ) ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $language['name'] ); ?></a>
+						<a href="<?php echo esc_url( localize_url( home_url( $filters['page'] ), $locale ) ); ?>" target="_blank" rel="noopener"><?php echo flag_img( $locale ) . ' ' . esc_html( $language['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag_img() escapes. ?></a>
 					<?php endforeach; ?>
 				</span>
 			<?php endif; ?>
@@ -182,9 +184,9 @@ function strings_page() {
 				<p class="description"><?php esc_html_e( 'Markers like [1]...[/1] stand for links and formatting, [2/] for a line break: keep them around the matching words. The page shows the base text wherever a translation is empty.', 'langsail' ); ?></p>
 				<table class="widefat striped langsail-table">
 					<thead><tr>
-						<th scope="col"><?php echo esc_html( $settings['base_name'] ); ?></th>
+						<th scope="col"><?php echo flag_img( $settings['base'] ) . ' ' . esc_html( $settings['base_name'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag_img() escapes. ?></th>
 						<?php foreach ( $languages as $language ) : ?>
-							<th scope="col"><?php echo esc_html( $language['name'] ); ?></th>
+							<th scope="col"><?php echo flag_img( $language['locale'] ) . ' ' . esc_html( $language['name'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- flag_img() escapes. ?></th>
 						<?php endforeach; ?>
 					</tr></thead>
 					<tbody>
@@ -205,7 +207,7 @@ function strings_page() {
 											echo esc_html( sprintf( __( 'Translation in %s', 'langsail' ), $language['name'] ) );
 											?>
 										</label>
-										<textarea id="<?php echo esc_attr( "ls-{$row['id']}-{$locale}" ); ?>" name="<?php echo esc_attr( "tr[{$locale}][{$row['id']}]" ); ?>" lang="<?php echo esc_attr( hreflang( $locale ) ); ?>" dir="auto" rows="<?php echo esc_attr( (string) min( 6, 1 + intdiv( strlen( $row['source'] ), 60 ) ) ); ?>"><?php echo esc_textarea( $tr ? display_text( $tr['text'], $row['kind'], $row['source'] ) : '' ); ?></textarea>
+										<textarea id="<?php echo esc_attr( "ls-{$row['id']}-{$locale}" ); ?>" name="<?php echo esc_attr( "tr[{$locale}][{$row['id']}]" ); ?>" lang="<?php echo esc_attr( hreflang( $locale ) ); ?>" dir="auto" rows="<?php echo esc_attr( (string) min( 6, 2 + intdiv( strlen( $row['source'] ), 60 ) ) ); ?>"><?php echo esc_textarea( $tr ? display_text( $tr['text'], $row['kind'], $row['source'] ) : '' ); ?></textarea>
 									</td>
 								<?php endforeach; ?>
 							</tr>

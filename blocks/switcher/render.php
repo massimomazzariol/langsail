@@ -7,4 +7,4 @@
 
 defined( 'ABSPATH' ) || exit;
 
-echo \LangSail\switcher_markup( get_block_wrapper_attributes() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in switcher_markup().
+echo \LangSail\switcher_markup( get_block_wrapper_attributes(), $attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in switcher_markup().

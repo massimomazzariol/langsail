@@ -9,6 +9,10 @@
 	"description": "Links to the current page in every site language.",
 	"keywords": [ "language", "translation", "multilingual" ],
 	"textdomain": "langsail",
+	"attributes": {
+		"showFlags": { "type": "boolean", "default": false },
+		"label": { "type": "string", "enum": [ "name", "code" ], "default": "name" }
+	},
 	"supports": {
 		"html": false,
 		"align": [ "left", "center", "right" ],
