@@ -24,7 +24,9 @@ function admin_menu() {
 
 /** Until the base language is confirmed, nothing is translated: say so on every admin screen. */
 function confirm_notice() {
-	if ( settings()['confirmed'] || ! current_user_can( 'manage_options' ) ) {
+	// Only where a site owner looks after installing (Dashboard, Plugins) and on LangSail's own screens.
+	$screen = get_current_screen();
+	if ( settings()['confirmed'] || ! current_user_can( 'manage_options' ) || ! $screen || ! in_array( $screen->id, array( 'dashboard', 'plugins', 'toplevel_page_langsail', 'langsail_page_langsail-settings' ), true ) ) {
 		return;
 	}
 	printf(

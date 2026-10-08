@@ -28,6 +28,12 @@ LangSail keeps a single version of every page, template and menu, written in the
 * Translator role; WP-CLI commands (scan, stats, export, import, cleanup)
 * Import and export: JSON for moving between sites, PO for translators
 
+== External services ==
+
+LangSail calls no external service for translating: texts and translations stay in your database, and an AI agent can reach them only through the abilities, with the permissions of the user it acts for.
+
+When you add a language in Settings, LangSail asks WordPress to download the WordPress, theme and plugin translations for it from WordPress.org (translate.wordpress.org language packs), the same service WordPress uses for its own updates. No visitor data is sent. WordPress.org terms: https://wordpress.org/about/privacy/
+
 == Frequently Asked Questions ==
 
 = What happens to my translations if I delete the plugin? =

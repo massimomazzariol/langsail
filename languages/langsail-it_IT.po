@@ -11,7 +11,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-08T19:47:44+00:00\n"
+"POT-Creation-Date: 2026-10-08T20:11:13+00:00\n"
 "PO-Revision-Date: 2026-10-08\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: langsail\n"
@@ -102,7 +102,7 @@ msgid "Translations"
 msgstr "Traduzioni"
 
 #: includes/admin-settings.php:22
-#: includes/admin-settings.php:68
+#: includes/admin-settings.php:70
 msgid "LangSail settings"
 msgstr "Impostazioni di LangSail"
 
@@ -110,89 +110,89 @@ msgstr "Impostazioni di LangSail"
 msgid "Settings"
 msgstr "Impostazioni"
 
-#: includes/admin-settings.php:32
+#: includes/admin-settings.php:34
 msgid "LangSail: confirm the base language of the site before adding translations."
 msgstr "LangSail: conferma la lingua base del sito prima di aggiungere traduzioni."
 
-#: includes/admin-settings.php:34
+#: includes/admin-settings.php:36
 #: includes/admin-strings.php:113
 msgid "Open the settings"
 msgstr "Apri le impostazioni"
 
-#: includes/admin-settings.php:46
+#: includes/admin-settings.php:48
 msgid "Common languages"
 msgstr "Lingue più comuni"
 
-#: includes/admin-settings.php:47
+#: includes/admin-settings.php:49
 #: includes/admin-strings.php:213
 msgid "All languages"
 msgstr "Tutte le lingue"
 
-#: includes/admin-settings.php:70
+#: includes/admin-settings.php:72
 msgid "Settings saved. Language packs for the new languages were installed where available."
 msgstr "Impostazioni salvate. I pacchetti di lingua per le nuove lingue sono stati installati dove disponibili."
 
-#: includes/admin-settings.php:77
+#: includes/admin-settings.php:79
 msgid "Base language"
 msgstr "Lingua base"
 
-#: includes/admin-settings.php:82
+#: includes/admin-settings.php:84
 msgid "The language the site is written in. Every page is built once in this language; the others are translations of its texts."
 msgstr "La lingua in cui è scritto il sito. Ogni pagina si costruisce una volta in questa lingua; le altre sono traduzioni dei suoi testi."
 
-#: includes/admin-settings.php:84
+#: includes/admin-settings.php:86
 msgid "I am changing the base language: existing translations will no longer match the texts."
 msgstr "Sto cambiando la lingua base: le traduzioni esistenti non corrisponderanno più ai testi."
 
-#: includes/admin-settings.php:89
+#: includes/admin-settings.php:91
 msgid "Translation languages"
 msgstr "Lingue di traduzione"
 
-#: includes/admin-settings.php:94
+#: includes/admin-settings.php:96
 msgid "Hold Ctrl (Cmd on a Mac) to select more than one. Each language gets its own address prefix and the WordPress, theme and plugin translations are downloaded."
 msgstr "Tieni premuto Ctrl (Cmd su Mac) per sceglierne più di una. Ogni lingua ha il suo prefisso nell'indirizzo e vengono scaricate le traduzioni di WordPress, del tema e dei plugin."
 
-#: includes/admin-settings.php:98
+#: includes/admin-settings.php:100
 msgid "Indexing"
 msgstr "Indicizzazione"
 
-#: includes/admin-settings.php:101
+#: includes/admin-settings.php:103
 msgid "A language version of a page is offered to search engines (hreflang, sitemap) only when at least this share of its texts is translated; until then it is marked noindex."
 msgstr "La versione di una pagina in una lingua viene proposta ai motori di ricerca (hreflang, sitemap) solo quando almeno questa quota dei suoi testi è tradotta; fino ad allora è segnata noindex."
 
-#: includes/admin-settings.php:105
+#: includes/admin-settings.php:107
 msgid "Never translate"
 msgstr "Non tradurre mai"
 
-#: includes/admin-settings.php:108
+#: includes/admin-settings.php:110
 msgid "One text per line: brand names, codes, addresses. A text exactly like one of these stays as it is in every language and is not listed in the translation table."
 msgstr "Un testo per riga: nomi di marchi, codici, indirizzi. Un testo identico a uno di questi resta uguale in ogni lingua e non compare nella tabella delle traduzioni."
 
-#: includes/admin-settings.php:112
+#: includes/admin-settings.php:114
 msgid "Your data"
 msgstr "I tuoi dati"
 
-#: includes/admin-settings.php:114
+#: includes/admin-settings.php:116
 msgid "Delete all LangSail data when the plugin is deleted"
 msgstr "Cancella tutti i dati di LangSail quando il plugin viene eliminato"
 
-#: includes/admin-settings.php:115
+#: includes/admin-settings.php:117
 msgid "Off: deleting the plugin keeps texts, translations and settings, and installing it again brings everything back. On: they are erased for good. Pages are never changed. Export a backup from Translations > Import and export."
 msgstr "Spento: eliminando il plugin testi, traduzioni e impostazioni restano, e reinstallandolo ritrovi tutto. Acceso: vengono cancellati per sempre. Le pagine non vengono mai modificate. Esporta un backup da Traduzioni > Importa ed esporta."
 
-#: includes/admin-settings.php:120
+#: includes/admin-settings.php:122
 msgid "Addresses"
 msgstr "Indirizzi"
 
-#: includes/admin-settings.php:130
+#: includes/admin-settings.php:132
 msgid "Save settings"
 msgstr "Salva le impostazioni"
 
-#: includes/admin-settings.php:130
+#: includes/admin-settings.php:132
 msgid "Confirm and save"
 msgstr "Conferma e salva"
 
-#: includes/admin-settings.php:139
+#: includes/admin-settings.php:141
 msgid "You are not allowed to change these settings."
 msgstr "Non hai il permesso di modificare queste impostazioni."
 
@@ -477,6 +477,10 @@ msgstr "Questa non è una mappa di traduzioni."
 #: includes/transfer.php:269
 msgid "Choose one of the site languages for this file."
 msgstr "Scegli una delle lingue del sito per questo file."
+
+#: langsail.php:68
+msgid "The language of each page is part of its address (for example /it/). This site does not use cookies or browser storage to remember the language you choose, and LangSail stores no personal data about visitors."
+msgstr "La lingua di ogni pagina fa parte del suo indirizzo (per esempio /it/). Questo sito non usa cookie né memoria del browser per ricordare la lingua scelta, e LangSail non salva dati personali dei visitatori."
 
 #: blocks/switcher/index.js:17
 msgid "Display"

@@ -48,6 +48,7 @@ if ( is_admin() ) {
 }
 
 add_action( 'init', __NAMESPACE__ . '\\load_textdomain' );
+add_action( 'admin_init', __NAMESPACE__ . '\\privacy_policy_content' );
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\activate' );
 add_filter( 'pre_update_option_active_plugins', __NAMESPACE__ . '\\load_first' );
 add_action( 'admin_init', __NAMESPACE__ . '\\ensure_load_first' );
@@ -58,6 +59,14 @@ boot_router();
 /** Load the interface translations shipped in languages/ (wordpress.org language packs take precedence). */
 function load_textdomain() {
 	load_plugin_textdomain( 'langsail', false, dirname( plugin_basename( FILE ) ) . '/languages' ); // phpcs:ignore PluginCheck.CodeAnalysis.DiscouragedFunctions.load_plugin_textdomainFound -- Ships its own translations outside WordPress.org.
+}
+
+/** Suggested text for the site's privacy policy (Settings > Privacy). */
+function privacy_policy_content() {
+	wp_add_privacy_policy_content(
+		'LangSail',
+		wp_kses_post( wpautop( __( 'The language of each page is part of its address (for example /it/). This site does not use cookies or browser storage to remember the language you choose, and LangSail stores no personal data about visitors.', 'langsail' ) ) )
+	);
 }
 
 /** Create the tables and propose the current site language as the base language. */
