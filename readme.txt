@@ -28,6 +28,16 @@ LangSail keeps a single version of every page, template and menu, written in the
 * Translator role; WP-CLI commands (scan, stats, export, import, cleanup)
 * Import and export: JSON for moving between sites, PO for translators
 
+== Frequently Asked Questions ==
+
+= What happens to my translations if I delete the plugin? =
+
+Nothing, by default: deleting LangSail keeps texts, translations and settings, and installing it again brings everything back. They are erased only if you turn on Settings > Your data > Delete all LangSail data. Your pages are never changed.
+
+= How do I back up or move the translations? =
+
+Translations > Import and export > All languages (JSON), or wp langsail export. Importing the file restores texts, translations, translated addresses and, on a site without languages yet, the settings.
+
 == Screenshots ==
 
 1. The Translations screen: progress per language, pages overview with what is missing, translation table.

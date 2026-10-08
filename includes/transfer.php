@@ -2,7 +2,7 @@
 /**
  * Import and export of texts and translations.
  *
- * JSON: every text, every language and the translated address words in one file, lossless; importing it on another site (local to
+ * JSON: every text, every language, the translated address words and the settings in one file, lossless; importing it on another site (local to
  * live) creates the texts that site has not scanned yet. PO: one language per file for Poedit or a
  * translator; texts show markers instead of HTML, fuzzy entries come back as "review".
  *
@@ -22,7 +22,7 @@ const EXPORT_FORMAT = 'langsail';
 /**
  * Every text with its translations.
  *
- * @return array{format: string, version: int, base: string, strings: array, slugs: object}
+ * @return array{format: string, version: int, base: string, strings: array, slugs: object, settings: array}
  */
 function export_json() {
 	global $wpdb;
@@ -49,11 +49,12 @@ function export_json() {
 		);
 	}
 	return array(
-		'format'  => EXPORT_FORMAT,
-		'version' => 1,
-		'base'    => settings()['base'],
-		'strings' => $out,
-		'slugs'   => (object) get_option( SLUGS_OPTION, array() ),
+		'format'   => EXPORT_FORMAT,
+		'version'  => 1,
+		'base'     => settings()['base'],
+		'strings'  => $out,
+		'slugs'    => (object) get_option( SLUGS_OPTION, array() ),
+		'settings' => stored_settings( settings() ),
 	);
 }
 
@@ -70,6 +71,14 @@ function import_json( $data ) {
 	}
 	if ( ( $data['base'] ?? '' ) !== settings()['base'] ) {
 		return new \WP_Error( 'langsail_import', __( 'The export was made from a site with a different base language.', 'langsail' ) );
+	}
+	// A site without translation languages yet (a fresh install, a restore) takes the exported settings.
+	if ( ! settings()['languages'] && isset( $data['settings'] ) && is_array( $data['settings'] ) ) {
+		update_option( OPTION, stored_settings( normalize_settings( array( 'base' => settings()['base'], 'delete' => false ) + $data['settings'] ) ) );
+		settings( true );
+		if ( function_exists( __NAMESPACE__ . '\install_language_packs' ) ) {
+			install_language_packs( locales() );
+		}
 	}
 	$languages = settings()['languages'];
 	$count     = array(

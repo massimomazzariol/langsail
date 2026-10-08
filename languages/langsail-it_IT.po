@@ -11,7 +11,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-08T17:46:48+00:00\n"
+"POT-Creation-Date: 2026-10-08T19:47:44+00:00\n"
 "PO-Revision-Date: 2026-10-08\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: langsail\n"
@@ -76,7 +76,7 @@ msgid "Only the texts of this page (its path, like /about/). Empty for every pag
 msgstr "Solo i testi di questa pagina (il suo percorso, come /about/). Vuoto per tutte le pagine."
 
 #: includes/abilities.php:145
-#: includes/admin-strings.php:261
+#: includes/admin-strings.php:263
 msgid "Save translations"
 msgstr "Salva le traduzioni"
 
@@ -97,7 +97,7 @@ msgid "Not a translation language of this site. See langsail/list-languages."
 msgstr "Non è una lingua di traduzione di questo sito. Vedi langsail/list-languages."
 
 #: includes/admin-settings.php:21
-#: includes/admin-strings.php:107
+#: includes/admin-strings.php:109
 msgid "Translations"
 msgstr "Traduzioni"
 
@@ -115,7 +115,7 @@ msgid "LangSail: confirm the base language of the site before adding translation
 msgstr "LangSail: conferma la lingua base del sito prima di aggiungere traduzioni."
 
 #: includes/admin-settings.php:34
-#: includes/admin-strings.php:111
+#: includes/admin-strings.php:113
 msgid "Open the settings"
 msgstr "Apri le impostazioni"
 
@@ -124,7 +124,7 @@ msgid "Common languages"
 msgstr "Lingue più comuni"
 
 #: includes/admin-settings.php:47
-#: includes/admin-strings.php:211
+#: includes/admin-strings.php:213
 msgid "All languages"
 msgstr "Tutte le lingue"
 
@@ -168,263 +168,275 @@ msgstr "Non tradurre mai"
 msgid "One text per line: brand names, codes, addresses. A text exactly like one of these stays as it is in every language and is not listed in the translation table."
 msgstr "Un testo per riga: nomi di marchi, codici, indirizzi. Un testo identico a uno di questi resta uguale in ogni lingua e non compare nella tabella delle traduzioni."
 
-#: includes/admin-settings.php:113
+#: includes/admin-settings.php:112
+msgid "Your data"
+msgstr "I tuoi dati"
+
+#: includes/admin-settings.php:114
+msgid "Delete all LangSail data when the plugin is deleted"
+msgstr "Cancella tutti i dati di LangSail quando il plugin viene eliminato"
+
+#: includes/admin-settings.php:115
+msgid "Off: deleting the plugin keeps texts, translations and settings, and installing it again brings everything back. On: they are erased for good. Pages are never changed. Export a backup from Translations > Import and export."
+msgstr "Spento: eliminando il plugin testi, traduzioni e impostazioni restano, e reinstallandolo ritrovi tutto. Acceso: vengono cancellati per sempre. Le pagine non vengono mai modificate. Esporta un backup da Traduzioni > Importa ed esporta."
+
+#: includes/admin-settings.php:120
 msgid "Addresses"
 msgstr "Indirizzi"
 
-#: includes/admin-settings.php:123
+#: includes/admin-settings.php:130
 msgid "Save settings"
 msgstr "Salva le impostazioni"
 
-#: includes/admin-settings.php:123
+#: includes/admin-settings.php:130
 msgid "Confirm and save"
 msgstr "Conferma e salva"
 
-#: includes/admin-settings.php:132
+#: includes/admin-settings.php:139
 msgid "You are not allowed to change these settings."
 msgstr "Non hai il permesso di modificare queste impostazioni."
 
 #. translators: 1: pages done, 2: pages in total.
-#: includes/admin-strings.php:46
+#: includes/admin-strings.php:48
 #, php-format
 msgid "Scanning page %1$d of %2$d..."
 msgstr "Scansione della pagina %1$d di %2$d..."
 
 #. translators: 1: pages scanned, 2: new texts found.
-#: includes/admin-strings.php:48
+#: includes/admin-strings.php:50
 #, php-format
 msgid "Scan complete: %1$d pages, %2$d new texts. Reloading..."
 msgstr "Scansione completata: %1$d pagine, %2$d testi nuovi. Ricarico..."
 
 #. translators: %s: page address.
-#: includes/admin-strings.php:50
+#: includes/admin-strings.php:52
 #, php-format
 msgid "Could not scan %s"
 msgstr "Impossibile scansionare %s"
 
-#: includes/admin-strings.php:110
+#: includes/admin-strings.php:112
 msgid "Choose the translation languages first."
 msgstr "Scegli prima le lingue di traduzione."
 
-#: includes/admin-strings.php:119
+#: includes/admin-strings.php:121
 msgid "Translations saved."
 msgstr "Traduzioni salvate."
 
-#: includes/admin-strings.php:129
+#: includes/admin-strings.php:131
 msgid "These translations were not saved:"
 msgstr "Queste traduzioni non sono state salvate:"
 
 #. translators: %d: number of texts.
-#: includes/admin-strings.php:140
+#: includes/admin-strings.php:142
 #, php-format
 msgid "%d text on the site."
 msgid_plural "%d texts on the site."
 msgstr[0] "%d testo nel sito."
 msgstr[1] "%d testi nel sito."
 
-#: includes/admin-strings.php:154
+#: includes/admin-strings.php:156
 msgid "Scan the site for new texts"
 msgstr "Cerca testi nuovi nel sito"
 
-#: includes/admin-strings.php:160
+#: includes/admin-strings.php:162
 msgid "Import and export"
 msgstr "Importa ed esporta"
 
-#: includes/admin-strings.php:162
+#: includes/admin-strings.php:164
 msgid "Export:"
 msgstr "Esporta:"
 
-#: includes/admin-strings.php:163
+#: includes/admin-strings.php:165
 msgid "All languages (JSON)"
 msgstr "Tutte le lingue (JSON)"
 
-#: includes/admin-strings.php:171
+#: includes/admin-strings.php:173
 msgid "File (.json or .po)"
 msgstr "File (.json o .po)"
 
-#: includes/admin-strings.php:173
+#: includes/admin-strings.php:175
 msgid "Language of a .po file or a map"
 msgstr "Lingua di un file .po o di una mappa"
 
-#: includes/admin-strings.php:179
+#: includes/admin-strings.php:181
 msgid "Import"
 msgstr "Importa"
 
-#: includes/admin-strings.php:181
+#: includes/admin-strings.php:183
 msgid "JSON carries every text and language, for moving translations between sites (local to live). PO holds one language for Poedit or a translator; fuzzy entries are imported as \"to review\"."
 msgstr "Il JSON contiene tutti i testi e tutte le lingue, per spostare le traduzioni tra siti (dal locale al sito online). Il PO contiene una lingua per Poedit o per un traduttore; le voci fuzzy vengono importate come \"da rivedere\"."
 
-#: includes/admin-strings.php:185
+#: includes/admin-strings.php:187
 msgid "Remove texts no longer on any page"
 msgstr "Rimuovi i testi che non sono più in nessuna pagina"
 
-#: includes/admin-strings.php:186
+#: includes/admin-strings.php:188
 msgid "Scan the site first: texts removed from every page are deleted with their translations."
 msgstr "Prima scansiona il sito: i testi tolti da tutte le pagine vengono eliminati con le loro traduzioni."
 
-#: includes/admin-strings.php:196
-#: includes/admin-strings.php:430
+#: includes/admin-strings.php:198
+#: includes/admin-strings.php:432
 msgid "Page"
 msgstr "Pagina"
 
-#: includes/admin-strings.php:198
-#: includes/admin-strings.php:476
+#: includes/admin-strings.php:200
+#: includes/admin-strings.php:478
 msgid "All pages"
 msgstr "Tutte le pagine"
 
-#: includes/admin-strings.php:203
+#: includes/admin-strings.php:205
 msgid "Show"
 msgstr "Mostra"
 
-#: includes/admin-strings.php:205
+#: includes/admin-strings.php:207
 msgid "All texts"
 msgstr "Tutti i testi"
 
-#: includes/admin-strings.php:206
+#: includes/admin-strings.php:208
 msgid "Missing a translation"
 msgstr "Senza traduzione"
 
-#: includes/admin-strings.php:207
+#: includes/admin-strings.php:209
 msgid "To review"
 msgstr "Da rivedere"
 
-#: includes/admin-strings.php:209
-#: includes/switcher.php:47
+#: includes/admin-strings.php:211
+#: includes/switcher.php:48
 msgid "Language"
 msgstr "Lingua"
 
-#: includes/admin-strings.php:216
+#: includes/admin-strings.php:218
 msgid "Search"
 msgstr "Cerca"
 
-#: includes/admin-strings.php:218
+#: includes/admin-strings.php:220
 msgid "Filter"
 msgstr "Filtra"
 
-#: includes/admin-strings.php:222
+#: includes/admin-strings.php:224
 msgid "No texts here yet. Scan the site to collect them."
 msgstr "Ancora nessun testo. Scansiona il sito per raccoglierli."
 
-#: includes/admin-strings.php:228
+#: includes/admin-strings.php:230
 msgid "Markers like [1]...[/1] stand for links and formatting, [2/] for a line break: keep them around the matching words. The page shows the base text wherever a translation is empty."
 msgstr "I segnaposto come [1]...[/1] indicano link e formattazione, [2/] un a capo: tienili attorno alle parole corrispondenti. Dove la traduzione è vuota la pagina mostra il testo nella lingua base."
 
-#: includes/admin-strings.php:242
+#: includes/admin-strings.php:244
 msgid "page title"
 msgstr "titolo della pagina"
 
-#: includes/admin-strings.php:242
+#: includes/admin-strings.php:244
 msgid "attribute"
 msgstr "attributo"
 
 #. translators: %s: language name.
-#: includes/admin-strings.php:251
+#: includes/admin-strings.php:253
 #, php-format
 msgid "Translation in %s"
 msgstr "Traduzione in %s"
 
-#: includes/admin-strings.php:288
-#: includes/slugs.php:74
+#: includes/admin-strings.php:290
+#: includes/slugs.php:108
 msgid "You are not allowed to edit translations."
 msgstr "Non hai il permesso di modificare le traduzioni."
 
-#: includes/admin-strings.php:315
+#: includes/admin-strings.php:317
 msgid "You are not allowed to export translations."
 msgstr "Non hai il permesso di esportare le traduzioni."
 
-#: includes/admin-strings.php:323
+#: includes/admin-strings.php:325
 msgid "Unknown language."
 msgstr "Lingua sconosciuta."
 
-#: includes/admin-strings.php:343
+#: includes/admin-strings.php:345
 msgid "You are not allowed to import translations."
 msgstr "Non hai il permesso di importare le traduzioni."
 
-#: includes/admin-strings.php:349
+#: includes/admin-strings.php:351
 msgid "The file could not be read."
 msgstr "Impossibile leggere il file."
 
 #. translators: %d: number of translations.
-#: includes/admin-strings.php:356
+#: includes/admin-strings.php:358
 #, php-format
 msgid "%d translation imported."
 msgid_plural "%d translations imported."
 msgstr[0] "%d traduzione importata."
 msgstr[1] "%d traduzioni importate."
 
-#: includes/admin-strings.php:368
+#: includes/admin-strings.php:370
 msgid "You are not allowed to change translations."
 msgstr "Non hai il permesso di cambiare le traduzioni."
 
 #. translators: %d: number of texts.
-#: includes/admin-strings.php:373
+#: includes/admin-strings.php:375
 #, php-format
 msgid "%d unused text removed."
 msgid_plural "%d unused texts removed."
 msgstr[0] "%d testo inutilizzato rimosso."
 msgstr[1] "%d testi inutilizzati rimossi."
 
-#: includes/admin-strings.php:385
+#: includes/admin-strings.php:387
 msgid "Home page"
 msgstr "Home page"
 
-#: includes/admin-strings.php:386
+#: includes/admin-strings.php:388
 msgid "Page not found (404)"
 msgstr "Pagina non trovata (404)"
 
-#: includes/admin-strings.php:387
+#: includes/admin-strings.php:389
 msgid "Search results"
 msgstr "Risultati di ricerca"
 
-#: includes/admin-strings.php:427
+#: includes/admin-strings.php:429
 msgid "Pages"
 msgstr "Pagine"
 
-#: includes/admin-strings.php:431
+#: includes/admin-strings.php:433
 msgid "Texts"
 msgstr "Testi"
 
 #. translators: %d: number of texts without a translation.
-#: includes/admin-strings.php:455
+#: includes/admin-strings.php:457
 #, php-format
 msgid "%d missing"
 msgid_plural "%d missing"
 msgstr[0] "%d mancante"
 msgstr[1] "%d mancanti"
 
-#: includes/admin-strings.php:459
+#: includes/admin-strings.php:461
 msgid "Translated"
 msgstr "Tradotta"
 
 #. translators: %s: language name.
-#: includes/admin-strings.php:465
+#: includes/admin-strings.php:467
 #, php-format
 msgid "View in %s"
 msgstr "Vedi in %s"
 
 #. translators: %d: marker number.
-#: includes/placeholders.php:77
+#: includes/placeholders.php:81
 #, php-format
 msgid "Marker %d does not exist in the original text."
 msgstr "Il segnaposto %d non esiste nel testo originale."
 
 #. translators: %d: marker number.
-#: includes/placeholders.php:84
+#: includes/placeholders.php:88
 #, php-format
 msgid "Marker [%d] is used twice."
 msgstr "Il segnaposto [%d] è usato due volte."
 
 #. translators: %d: marker number.
-#: includes/placeholders.php:92
+#: includes/placeholders.php:96
 #, php-format
 msgid "Marker [/%d] closes in the wrong place."
 msgstr "Il segnaposto [/%d] si chiude nel punto sbagliato."
 
-#: includes/placeholders.php:99
+#: includes/placeholders.php:103
 msgid "Every [n]...[/n] marker of the original text must be in the translation."
 msgstr "Ogni segnaposto [n]...[/n] del testo originale deve essere nella traduzione."
 
-#: includes/placeholders.php:176
+#: includes/placeholders.php:180
 msgid "Unknown text."
 msgstr "Testo sconosciuto."
 
@@ -432,37 +444,37 @@ msgstr "Testo sconosciuto."
 msgid "Translator"
 msgstr "Traduttore"
 
-#: includes/slugs.php:112
+#: includes/slugs.php:130
 msgid "Translated addresses"
 msgstr "Indirizzi tradotti"
 
-#: includes/slugs.php:113
+#: includes/slugs.php:131
 msgid "Optional: a word of an address in each language, like \"chi-siamo\" for \"about\". Leave empty to keep the original word. Links, the language switcher and the sitemap follow automatically."
 msgstr "Facoltativo: una parola dell'indirizzo in ogni lingua, come \"chi-siamo\" per \"about\". Lascia vuoto per tenere la parola originale. Link, selettore di lingua e sitemap si adeguano da soli."
 
 #. translators: 1: address word, 2: language name.
-#: includes/slugs.php:135
+#: includes/slugs.php:153
 #, php-format
 msgid "\"%1$s\" in %2$s"
 msgstr "\"%1$s\" in %2$s"
 
-#: includes/slugs.php:145
+#: includes/slugs.php:163
 msgid "Save addresses"
 msgstr "Salva gli indirizzi"
 
-#: includes/transfer.php:64
+#: includes/transfer.php:70
 msgid "This is not a LangSail export."
 msgstr "Questo non è un export di LangSail."
 
-#: includes/transfer.php:67
+#: includes/transfer.php:73
 msgid "The export was made from a site with a different base language."
 msgstr "L'export viene da un sito con una lingua base diversa."
 
-#: includes/transfer.php:231
+#: includes/transfer.php:248
 msgid "This is not a translation map."
 msgstr "Questa non è una mappa di traduzioni."
 
-#: includes/transfer.php:252
+#: includes/transfer.php:269
 msgid "Choose one of the site languages for this file."
 msgstr "Scegli una delle lingue del sito per questo file."
 

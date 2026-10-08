@@ -92,6 +92,7 @@ function normalize_settings( $value ) {
 		'base'      => $base,
 		'base_name' => $names[ $base ] ?? native_name( $base ),
 		'confirmed' => ! empty( $value['confirmed'] ),
+		'delete'    => ! empty( $value['delete'] ),
 		'threshold' => isset( $value['threshold'] ) && is_numeric( $value['threshold'] ) ? max( 0, min( 100, (int) $value['threshold'] ) ) : 100,
 		'keep'      => array_values( array_unique( array_filter( array_map( fn( $line ) => normalize( sanitize_text_field( (string) $line ) ), (array) ( $value['keep'] ?? array() ) ) ) ) ),
 		'languages' => $languages,
@@ -108,6 +109,7 @@ function stored_settings( array $settings ) {
 	return array(
 		'base'      => $settings['base'],
 		'confirmed' => $settings['confirmed'],
+		'delete'    => $settings['delete'],
 		'threshold' => $settings['threshold'],
 		'keep'      => $settings['keep'],
 		'languages' => array_keys( $settings['languages'] ),

@@ -108,6 +108,13 @@ function settings_page() {
 						<p class="description" id="langsail-keep-help"><?php esc_html_e( 'One text per line: brand names, codes, addresses. A text exactly like one of these stays as it is in every language and is not listed in the translation table.', 'langsail' ); ?></p>
 					</td>
 				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Your data', 'langsail' ); ?></th>
+					<td>
+						<label><input type="checkbox" name="delete" value="1" aria-describedby="langsail-delete-help" <?php checked( $settings['delete'] ); ?>> <?php esc_html_e( 'Delete all LangSail data when the plugin is deleted', 'langsail' ); ?></label>
+						<p class="description" id="langsail-delete-help"><?php esc_html_e( 'Off: deleting the plugin keeps texts, translations and settings, and installing it again brings everything back. On: they are erased for good. Pages are never changed. Export a backup from Translations > Import and export.', 'langsail' ); ?></p>
+					</td>
+				</tr>
 				<?php if ( $settings['languages'] ) : ?>
 					<tr>
 						<th scope="row"><?php esc_html_e( 'Addresses', 'langsail' ); ?></th>
@@ -153,6 +160,7 @@ function save_settings() {
 		array(
 			'base'      => $base,
 			'confirmed' => true,
+			'delete'    => ! empty( $_POST['delete'] ),
 			'threshold' => isset( $_POST['threshold'] ) ? absint( $_POST['threshold'] ) : $current['threshold'],
 			'keep'      => isset( $_POST['keep'] ) ? preg_split( '/\R/', wp_unslash( $_POST['keep'] ) ) : $current['keep'], // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Each line sanitized in normalize_settings().
 			'languages' => $languages,

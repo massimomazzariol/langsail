@@ -64,6 +64,26 @@ Measured on WordPress 7.1 with Twenty Twenty-Five and five languages:
 | Base language pages | untouched: no output buffering |
 | Release ZIP | 182 KB, most of it the 201 optional flags |
 
+## Your data
+
+LangSail never changes your pages: they stay in the base language exactly as you built them. What it adds lives in the database under its own names, so any full database backup includes it.
+
+| Data | Where |
+| --- | --- |
+| Settings | option `langsail_settings` |
+| Translated address words | option `langsail_slugs` |
+| Texts, the pages they appear on, translations | tables `{prefix}langsail_strings`, `{prefix}langsail_string_pages`, `{prefix}langsail_translations` |
+| Translator role | role `langsail_translator`, capability `langsail_translate` |
+
+| You... | What happens |
+| --- | --- |
+| Deactivate the plugin | Nothing is removed. The site shows the base language only; addresses like `/it/` answer "not found" until you activate it again. |
+| Delete the plugin | **Nothing is removed by default**: install it again and everything is back. Only with **Settings > Your data > Delete all LangSail data** turned on are the tables, options and role erased. |
+| Export (Translations > Import and export, or `wp langsail export`) | One JSON file with every text, translation, translated address and the settings. |
+| Import that file | Restores it all, on the same site or another one (local to live). A site without languages yet also takes the settings. |
+
+Removing LangSail for good from a site already indexed in several languages? Redirect the old language addresses (`/it/*`, `/es/*`...) to the base language pages, so search engines and visitors are not left on "not found".
+
 ## Usage
 
 1. Activate the plugin and confirm the base language under **LangSail > Settings**.

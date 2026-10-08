@@ -7,6 +7,13 @@
 
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
+// Data stays unless the site owner asked for it to go (LangSail > Settings > Your data): deleting the
+// plugin by mistake must never lose translations.
+$langsail_settings = get_option( 'langsail_settings' );
+if ( ! is_array( $langsail_settings ) || empty( $langsail_settings['delete'] ) ) {
+	return;
+}
+
 global $wpdb;
 // phpcs:disable WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Drops LangSail's own tables, fixed names.
 foreach ( array( 'langsail_strings', 'langsail_string_pages', 'langsail_translations' ) as $langsail_table ) {

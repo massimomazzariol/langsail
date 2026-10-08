@@ -35,3 +35,5 @@
 - Language names fall back to the native name when the settings were written without names (code, WP-CLI).
 - Translated address words travel with the JSON export.
 - Plugin Check (WordPress.org) passes with no errors or warnings.
+- Deleting the plugin keeps all data unless Settings > Your data > Delete all LangSail data is on; pages are never changed.
+- The JSON backup carries the settings; a site without languages takes them on import (the delete-data choice is never imported).

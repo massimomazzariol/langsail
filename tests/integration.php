@@ -245,8 +245,20 @@ try {
 	$check( $home . 'privacy-policy/?a=1' === language_from_uri( $home . 'it/privacy/?a=1' )['uri'] && $home . 'privacy-policy/' === language_from_uri( $home . 'it/privacy-policy/' )['uri'], 'Translated and original words both lead to the page' );
 	$moved = export_json();
 	update_option( SLUGS_OPTION, array() );
+	update_option( OPTION, stored_settings( normalize_settings( array( 'base' => 'en_US', 'confirmed' => true ) ) ) );
+	settings( true );
 	import_json( json_decode( wp_json_encode( $moved ), true ) );
 	$check( array( 'it_IT' => array( 'privacy-policy' => 'privacy', 'about' => 'chi-siamo' ) ) === get_option( SLUGS_OPTION ), 'Translated address words travel with the JSON export' );
+	$check( array( 'en_US', 'it_IT', 'es_ES', 'ru_RU' ) === locales() && 'Italiano' === settings()['languages']['it_IT']['name'], 'A site without languages takes the settings of the imported backup' );
+
+	// Deleting the plugin keeps the data unless the owner asked otherwise.
+	if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+		define( 'WP_UNINSTALL_PLUGIN', 'langsail/langsail.php' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- Core-required uninstall guard, defined only in this CLI test.
+	}
+	$check( false === settings()['delete'], 'Deleting data on uninstall is off by default' );
+	require dirname( __DIR__ ) . '/uninstall.php';
+	global $wpdb;
+	$check( is_array( get_option( OPTION ) ) && is_array( get_option( SLUGS_OPTION ) ) && tables()['strings'] === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', tables()['strings'] ) ) && dictionary( 'it_IT' ), 'Uninstall with the default setting keeps settings, tables and translations' );
 	$privacy = url_to_postid( home_url( '/privacy-policy/' ) );
 	if ( $privacy ) {
 		$response = wp_remote_get( home_url( '/it/privacy/' ), $http );
