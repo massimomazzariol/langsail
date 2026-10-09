@@ -44,7 +44,7 @@ Completely free: no paid tier, no account, no translation credits.
 - **Every text, one table.** A text unit is what a person reads as one piece: a paragraph with its links and bold words, a heading, a menu item, a button, an image description, a field placeholder, the page title and SEO description. LangSail finds them in the page as visitors see it, header, footer and other plugins' output included.
 - **Pages overview.** Every page with the texts still missing in each language, one click to exactly those texts and to the page in that language. Filter by page, language, missing or to review.
 - **Markup-safe.** Links and formatting appear as markers (`Hello [1]our team[/1]`), checked on save, so a translation cannot break the HTML.
-- **Edits are not lost.** When a sentence changes, the old translation is carried over and marked *to review*. Untranslated texts fall back to the base language.
+- **Edits are not lost.** When a sentence changes, the old translation is carried over and marked *to review*: it goes live when you approve it, and until then the page shows the new base text, never an outdated translation. Untranslated texts fall back to the base language.
 - **WordPress speaks the language.** On `/it/` the site runs in Italian: WordPress, theme and plugin strings, dates, `<html lang>`. Language packs are downloaded when you add a language.
 - **SEO first.** `hreflang` alternates with `x-default`, localized canonical and internal links, translated titles, descriptions and JSON-LD, language versions in the sitemap. A language version is indexed only once its page is translated (threshold in the settings); until then it is sent with `noindex`.
 - **Translated addresses (optional).** `/it/chi-siamo/` for `/about/`; links, switcher, hreflang and sitemap follow, and the original words keep working.
@@ -108,7 +108,7 @@ LangSail is AI ready without calling any AI itself. It registers its actions on 
 | `langsail/list-languages` | Your instructions for translators, the never-translate list, base and translation languages with their progress. Read-only. |
 | `langsail/list-texts` | Texts of one language, filtered by missing, to review or all, by page and search, with paging. Read-only. |
 | `langsail/save-translations` | Saves a batch of translations into one language. Translations with wrong markers are rejected and returned as errors. |
-| `langsail/scan` | Visits every page to collect new and changed texts. |
+| `langsail/scan` | Visits the pages to collect new and changed texts, 20 at a time (`offset`, `next_offset`), so each call ends within a web request. |
 
 All abilities need the `langsail_translate` capability (administrators and the Translator role) and run with that user's permissions. LangSail sends nothing anywhere: your agent reads the texts and writes the translations. Example prompt: *"Translate every missing text of the site into German, keep the markers, and save them as to review."*
 

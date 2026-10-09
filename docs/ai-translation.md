@@ -66,7 +66,7 @@ What the agent does:
 | Step | Ability |
 | --- | --- |
 | Reads your instructions, the never-translate list and the progress | `langsail/list-languages` |
-| Optionally collects new texts after content changes | `langsail/scan` |
+| Optionally collects new texts after content changes, 20 pages per call until `next_offset` is null | `langsail/scan` with `offset` |
 | Fetches the texts still missing, 50 at a time | `langsail/list-texts` with `locale`, `status: missing`, `limit`, `offset` |
 | Saves them; wrong markers come back as errors to fix | `langsail/save-translations` with `locale`, `status`, `translations` |
 

@@ -9,14 +9,14 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-08T20:49:55+00:00\n"
+"POT-Creation-Date: 2026-10-09T07:00:16+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: langsail\n"
 
 #. Plugin Name of the plugin
 #: langsail.php
-#: includes/abilities.php:26
+#: includes/abilities.php:29
 #: includes/admin-settings.php:20
 msgid "LangSail"
 msgstr ""
@@ -41,56 +41,56 @@ msgstr ""
 msgid "https://github.com/massimomazzariol"
 msgstr ""
 
-#: includes/abilities.php:27
+#: includes/abilities.php:30
 msgid "Site translation: languages, texts to translate and translations."
 msgstr ""
 
-#: includes/abilities.php:54
+#: includes/abilities.php:57
 msgid "Locale of a translation language, from langsail/list-languages."
 msgstr ""
 
-#: includes/abilities.php:60
+#: includes/abilities.php:63
 msgid "List languages"
 msgstr ""
 
-#: includes/abilities.php:61
+#: includes/abilities.php:64
 msgid "Start here. Returns the site owner's instructions for translators (tone, audience, fixed terms: follow them in every translation), the base language, the texts that must never be translated, and the translation languages with their locale, URL prefix and progress."
 msgstr ""
 
-#: includes/abilities.php:85
+#: includes/abilities.php:88
 msgid "List texts to translate"
 msgstr ""
 
-#: includes/abilities.php:86
+#: includes/abilities.php:89
 msgid "Lists texts of the site in the base language with their translation in one language. Markers like [1]...[/1] stand for links and formatting and [2/] for a line break: a translation must keep the same markers around the matching words. Kind \"attr\" and \"title\" are plain text. Follow the instructions from langsail/list-languages. Translate with langsail/save-translations."
 msgstr ""
 
-#: includes/abilities.php:96
+#: includes/abilities.php:99
 msgid "missing: no translation yet; review: translation kept from an older version of the text, to check; all: every text."
 msgstr ""
 
-#: includes/abilities.php:101
+#: includes/abilities.php:104
 msgid "Only the texts of this page (its path, like /about/). Empty for every page."
 msgstr ""
 
-#: includes/abilities.php:150
+#: includes/abilities.php:153
 #: includes/admin-strings.php:263
 msgid "Save translations"
 msgstr ""
 
-#: includes/abilities.php:151
+#: includes/abilities.php:154
 msgid "Saves translations of texts from langsail/list-texts into one language. Each translation must keep the markers of its source. Translations with wrong markers are not saved and are returned as errors. Use status \"review\" to ask a person to check them."
 msgstr ""
 
-#: includes/abilities.php:199
+#: includes/abilities.php:202
 msgid "Scan the site"
 msgstr ""
 
-#: includes/abilities.php:200
-msgid "Visits every page of the site to collect new and changed texts. Run it after content changes, before listing the texts to translate. It can take a while on large sites."
+#: includes/abilities.php:203
+msgid "Visits the pages of the site to collect new and changed texts, a batch at a time: start with offset 0 and call again with next_offset until it is null. Run it after content changes, before listing the texts to translate."
 msgstr ""
 
-#: includes/abilities.php:225
+#: includes/abilities.php:247
 msgid "Not a translation language of this site. See langsail/list-languages."
 msgstr ""
 
@@ -342,7 +342,7 @@ msgid "Translation in %s"
 msgstr ""
 
 #: includes/admin-strings.php:290
-#: includes/slugs.php:108
+#: includes/slugs.php:114
 msgid "You are not allowed to edit translations."
 msgstr ""
 
@@ -450,21 +450,27 @@ msgstr ""
 msgid "Translator"
 msgstr ""
 
-#: includes/slugs.php:130
+#. translators: 1: address word, 2: language name.
+#: includes/slugs.php:98
+#, php-format
+msgid "\"%1$s\" in %2$s already leads to another page."
+msgstr ""
+
+#: includes/slugs.php:139
 msgid "Translated addresses"
 msgstr ""
 
-#: includes/slugs.php:131
+#: includes/slugs.php:140
 msgid "Optional: a word of an address in each language, like \"chi-siamo\" for \"about\". Leave empty to keep the original word. Links, the language switcher and the sitemap follow automatically."
 msgstr ""
 
 #. translators: 1: address word, 2: language name.
-#: includes/slugs.php:153
+#: includes/slugs.php:162
 #, php-format
 msgid "\"%1$s\" in %2$s"
 msgstr ""
 
-#: includes/slugs.php:163
+#: includes/slugs.php:172
 msgid "Save addresses"
 msgstr ""
 
@@ -476,11 +482,11 @@ msgstr ""
 msgid "The export was made from a site with a different base language."
 msgstr ""
 
-#: includes/transfer.php:248
+#: includes/transfer.php:257
 msgid "This is not a translation map."
 msgstr ""
 
-#: includes/transfer.php:269
+#: includes/transfer.php:278
 msgid "Choose one of the site languages for this file."
 msgstr ""
 

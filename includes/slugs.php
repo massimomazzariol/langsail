@@ -70,15 +70,16 @@ function page_slugs() {
 
 /**
  * Store translated slugs of the site languages (from the form or an import). An empty slug, or one
- * equal to the original, removes the translation.
+ * equal to the original, removes the translation. A word must lead to one page only: one already
+ * used in that language, or the original word of another page, is refused.
  *
  * @param mixed $submitted Locale => (base slug => translated slug).
- * @return int Number of slugs written or removed.
+ * @return string[] The refused words, explained.
  */
 function set_slugs( $submitted ) {
-	$all   = get_option( SLUGS_OPTION, array() );
-	$all   = is_array( $all ) ? $all : array();
-	$count = 0;
+	$all     = get_option( SLUGS_OPTION, array() );
+	$all     = is_array( $all ) ? $all : array();
+	$refused = array();
 	foreach ( settings()['languages'] as $locale => $language ) {
 		$items = $submitted[ $locale ] ?? array();
 		foreach ( is_array( $items ) ? $items : array() as $base => $slug ) {
@@ -87,19 +88,24 @@ function set_slugs( $submitted ) {
 			if ( '' === $base ) {
 				continue;
 			}
+			unset( $all[ $locale ][ $base ] );
 			if ( '' === $slug || $slug === $base ) {
-				unset( $all[ $locale ][ $base ] );
-			} else {
-				$all[ $locale ][ $base ] = $slug;
+				continue;
 			}
-			++$count;
+			$taken = array_merge( array_values( $all[ $locale ] ?? array() ), array_diff( page_slugs(), array( $base ) ) );
+			if ( in_array( $slug, $taken, true ) ) {
+				/* translators: 1: address word, 2: language name. */
+				$refused[] = sprintf( __( '"%1$s" in %2$s already leads to another page.', 'langsail' ), urldecode( $slug ), $language['name'] );
+				continue;
+			}
+			$all[ $locale ][ $base ] = $slug;
 		}
 		if ( empty( $all[ $locale ] ) ) {
 			unset( $all[ $locale ] );
 		}
 	}
 	update_option( SLUGS_OPTION, $all );
-	return $count;
+	return $refused;
 }
 
 /** Save the translated slugs from the Translations screen. */
@@ -109,7 +115,10 @@ function save_slugs() {
 	}
 	check_admin_referer( 'langsail_slugs' );
 	$submitted = isset( $_POST['slug'] ) && is_array( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized by set_slugs().
-	set_slugs( $submitted );
+	$refused = set_slugs( $submitted );
+	if ( $refused ) {
+		set_transient( 'langsail_errors_' . get_current_user_id(), $refused, HOUR_IN_SECONDS );
+	}
 	$return = isset( $_POST['return'] ) ? esc_url_raw( wp_unslash( $_POST['return'] ) ) : '';
 	wp_safe_redirect( add_query_arg( 'saved', '1', $return ? $return : admin_url( 'admin.php?page=langsail' ) ) );
 	exit;

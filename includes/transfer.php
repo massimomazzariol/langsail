@@ -63,7 +63,7 @@ function export_json() {
  * when the site has none for them), translations of the site languages are written.
  *
  * @param mixed $data Decoded export.
- * @return array{texts: int, translations: int}|\WP_Error
+ * @return array{texts: int, translations: int, errors: string[]}|\WP_Error
  */
 function import_json( $data ) {
 	if ( ! is_array( $data ) || EXPORT_FORMAT !== ( $data['format'] ?? '' ) || ! isset( $data['strings'] ) || ! is_array( $data['strings'] ) ) {
@@ -84,21 +84,30 @@ function import_json( $data ) {
 	$count     = array(
 		'texts'        => 0,
 		'translations' => 0,
+		'errors'       => array(),
 	);
 	$by_locale = array();
 	foreach ( $data['strings'] as $item ) {
 		if ( ! is_array( $item ) || ! isset( $item['source'] ) || ! is_string( $item['source'] ) || '' === trim( $item['source'] ) ) {
 			continue;
 		}
-		$kind = in_array( $item['kind'] ?? 'text', array( 'text', 'attr', 'title' ), true ) ? $item['kind'] : 'text';
-		$id   = ensure_string( normalize( $item['source'] ), $kind, array_filter( (array) ( $item['pages'] ?? array() ), 'is_string' ) );
+		$kind   = in_array( $item['kind'] ?? 'text', array( 'text', 'attr', 'title' ), true ) ? $item['kind'] : 'text';
+		$source = normalize( $item['source'] );
+		$id     = ensure_string( $source, $kind, array_filter( (array) ( $item['pages'] ?? array() ), 'is_string' ) );
 		++$count['texts'];
 		foreach ( (array) ( $item['translations'] ?? array() ) as $locale => $translation ) {
-			if ( isset( $languages[ $locale ] ) && is_array( $translation ) && isset( $translation['text'] ) && is_string( $translation['text'] ) ) {
-				$status                                   = 'review' === ( $translation['status'] ?? '' ) ? 'review' : 'translated';
-				$by_locale[ $locale ][ $status ][ $id ]   = 'text' === $kind ? wp_kses_post( $translation['text'] ) : sanitize_text_field( $translation['text'] );
-				++$count['translations'];
+			if ( ! isset( $languages[ $locale ] ) || ! is_array( $translation ) || ! isset( $translation['text'] ) || ! is_string( $translation['text'] ) ) {
+				continue;
 			}
+			// Text units keep exactly the source's tags, as in the table: a file cannot add links or markup.
+			$text = 'text' === $kind ? from_placeholders( translation_placeholders( $translation['text'], $source ), $source ) : sanitize_text_field( $translation['text'] );
+			if ( is_wp_error( $text ) ) {
+				$count['errors'][] = sprintf( '%s (%s): %s', wp_html_excerpt( to_placeholders( $source )['text'], 60, '...' ), $languages[ $locale ]['name'], $text->get_error_message() );
+				continue;
+			}
+			$status                                 = 'review' === ( $translation['status'] ?? '' ) ? 'review' : 'translated';
+			$by_locale[ $locale ][ $status ][ $id ] = $text;
+			++$count['translations'];
 		}
 	}
 	foreach ( $by_locale as $locale => $statuses ) {
@@ -107,7 +116,7 @@ function import_json( $data ) {
 		}
 	}
 	if ( isset( $data['slugs'] ) && is_array( $data['slugs'] ) ) {
-		set_slugs( $data['slugs'] );
+		$count['errors'] = array_merge( $count['errors'], set_slugs( $data['slugs'] ) );
 	}
 	return $count;
 }

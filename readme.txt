@@ -25,7 +25,7 @@ LangSail never calls an AI service. Through the WordPress Abilities API and the 
 * **One table.** Every text of the site as visitors see it, header, footer, menus and other plugins' output included. Filter by page, language, missing or to review.
 * **Pages overview.** Every page with what is still missing in each language, one click to exactly those texts and to the page in that language.
 * **Markup-safe.** Links and bold words appear as markers, `Hello [1]our team[/1]`, never as HTML.
-* **Edits are not lost.** A changed sentence keeps its old translation, marked to review. Untranslated texts fall back to the base language.
+* **Edits are not lost.** A changed sentence keeps its old translation, marked to review: it goes live once you approve it, never outdated. Untranslated texts fall back to the base language.
 * **WordPress speaks the language.** On /it/ the whole site runs in Italian: WordPress, theme and plugin strings, dates.
 
 = SEO first =

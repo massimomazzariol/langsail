@@ -18,6 +18,9 @@ add_action( 'wp_abilities_api_init', __NAMESPACE__ . '\\register_abilities' );
 /** Most texts one list-texts call returns. */
 const ABILITY_MAX_TEXTS = 200;
 
+/** Most pages one scan call visits: a web request must end within its time limit. */
+const SCAN_BATCH_MAX = 20;
+
 /** Register the LangSail ability category. */
 function register_ability_category() {
 	wp_register_ability_category(
@@ -197,17 +200,36 @@ function register_abilities() {
 		'langsail/scan',
 		array(
 			'label'               => __( 'Scan the site', 'langsail' ),
-			'description'         => __( 'Visits every page of the site to collect new and changed texts. Run it after content changes, before listing the texts to translate. It can take a while on large sites.', 'langsail' ),
+			'description'         => __( 'Visits the pages of the site to collect new and changed texts, a batch at a time: start with offset 0 and call again with next_offset until it is null. Run it after content changes, before listing the texts to translate.', 'langsail' ),
 			'category'            => 'langsail',
+			'input_schema'        => array(
+				'type'                 => 'object',
+				'properties'           => array(
+					'offset' => array(
+						'type'    => 'integer',
+						'minimum' => 0,
+						'default' => 0,
+					),
+					'limit'  => array(
+						'type'    => 'integer',
+						'minimum' => 1,
+						'maximum' => SCAN_BATCH_MAX,
+						'default' => SCAN_BATCH_MAX,
+					),
+				),
+				'additionalProperties' => false,
+			),
 			'output_schema'       => array(
 				'type'       => 'object',
 				'properties' => array(
-					'pages'  => array( 'type' => 'integer' ),
-					'new'    => array( 'type' => 'integer' ),
-					'failed' => array( 'type' => 'array' ),
+					'pages'       => array( 'type' => 'integer' ),
+					'new'         => array( 'type' => 'integer' ),
+					'failed'      => array( 'type' => 'array' ),
+					'total'       => array( 'type' => 'integer' ),
+					'next_offset' => array( 'type' => array( 'integer', 'null' ) ),
 				),
 			),
-			'execute_callback'    => __NAMESPACE__ . '\\scan_site',
+			'execute_callback'    => __NAMESPACE__ . '\\ability_scan',
 			'permission_callback' => $permission,
 			'meta'                => ability_meta( false ),
 		)
@@ -320,4 +342,14 @@ function ability_save_translations( $input ) {
 		'saved'  => count( $clean ),
 		'errors' => $errors,
 	);
+}
+
+/**
+ * Scan a batch of pages.
+ *
+ * @param array|null $input Ability input.
+ */
+function ability_scan( $input ) {
+	$input = is_array( $input ) ? $input : array();
+	return scan_site( (int) ( $input['offset'] ?? 0 ), min( SCAN_BATCH_MAX, max( 1, (int) ( $input['limit'] ?? SCAN_BATCH_MAX ) ) ) );
 }

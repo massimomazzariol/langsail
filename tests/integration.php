@@ -29,7 +29,7 @@ $cleanup = static function () {
 	global $wpdb;
 	$t = tables();
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$t['pages']} WHERE page IN (%s, %s)", '/langsail-test-page/', '/langsail-keep-test/' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
-	foreach ( array( 'LangSail test sentence one.', 'LangSail test alt', 'LangSail keep test', 'LangSail test sentence one, edited.', 'Something completely different here.' ) as $source ) {
+	foreach ( array( 'LangSail test sentence one.', 'LangSail test alt', 'LangSail keep test', 'LangSail test sentence one, edited.', 'Something completely different here.', 'LangSail import <a href="/x/">test</a>.' ) as $source ) {
 		$id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$t['strings']} WHERE hash = %s", md5( $source ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
 		$wpdb->delete( $t['translations'], array( 'string_id' => $id ) );
 		$wpdb->delete( $t['strings'], array( 'id' => $id ) );
@@ -202,6 +202,7 @@ try {
 	record_page( $page, array( 'LangSail test sentence one, edited.' => 'text' ) );
 	$edited = current( query_strings( array( 'page' => $page, 'locales' => array( 'it_IT' ) ) )['rows'] );
 	$check( 'LangSail test sentence one, edited.' === $edited['source'] && 'review' === ( $edited['translations']['it_IT']['status'] ?? '' ) && '' !== ( $edited['translations']['it_IT']['text'] ?? '' ), 'An edited text inherits the old translations, marked to review' );
+	$check( ! isset( dictionary( 'it_IT' )[ md5( 'LangSail test sentence one, edited.' ) ] ), 'Translations to review are not shown until approved: the base text shows' );
 	$check( in_array( $edited['id'], array_column( query_strings( array( 'status' => 'review', 'locales' => array( 'it_IT' ), 'per_page' => 500 ) )['rows'], 'id' ), true ), 'The "to review" filter finds texts to check in one language' );
 	record_page( $page, array( 'Something completely different here.' => 'text' ) );
 	$other = current( query_strings( array( 'page' => $page, 'locales' => array( 'it_IT' ) ) )['rows'] );
@@ -242,6 +243,19 @@ try {
 	}
 	ensure_roles();
 	$check( get_role( TRANSLATOR ) && get_role( TRANSLATOR )->has_cap( CAP_TRANSLATE ) && ! get_role( TRANSLATOR )->has_cap( 'manage_options' ), 'The Translator role can translate and nothing more' );
+	$term = wp_insert_term( 'LangSail scan term', 'category' );
+	$post = wp_insert_post( array( 'post_title' => 'LangSail scan post', 'post_status' => 'publish', 'post_category' => array( $term['term_id'] ) ) );
+	$check( in_array( get_term_link( $term['term_id'], 'category' ), scan_urls(), true ) && in_array( get_permalink( $post ), scan_urls(), true ), 'Scans cover posts and the archives of the terms in use' );
+	wp_delete_post( $post, true );
+	wp_delete_term( $term['term_id'], 'category' );
+	if ( function_exists( 'wp_get_ability' ) ) {
+		wp_set_current_user( (int) get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) )[0] );
+		$first = wp_get_ability( 'langsail/scan' )->execute( array( 'limit' => 1 ) );
+		$check( 1 === $first['pages'] && 1 === $first['next_offset'] && $first['total'] > 1 && is_array( get_transient( SCAN_STATE ) ), 'The scan ability visits one batch and says where to continue' );
+		$rest = wp_get_ability( 'langsail/scan' )->execute( array( 'offset' => 1, 'limit' => 20 ) );
+		$check( null === $rest['next_offset'] && false === get_transient( SCAN_STATE ) && ! $rest['failed'], 'The last batch finishes the scan' );
+		wp_set_current_user( 0 );
+	}
 	$token = scan_token();
 	$check( is_scan_token( $token ) && ! is_scan_token( '' ) && ! is_scan_token( 'x' . $token ), 'Scan tokens are checked exactly' );
 	delete_transient( SCAN_TOKEN );
@@ -250,6 +264,8 @@ try {
 	update_option( SLUGS_OPTION, array( 'it_IT' => array( 'privacy-policy' => 'privacy', 'about' => 'chi-siamo' ) ) );
 	$check( home_url( '/it/privacy/?a=1' ) === localize_url( home_url( '/privacy-policy/?a=1' ), 'it_IT' ) && home_url( '/es/privacy-policy/' ) === localize_url( home_url( '/privacy-policy/' ), 'es_ES' ), 'Links use the translated words of the address in that language only' );
 	$check( $home . 'privacy-policy/?a=1' === language_from_uri( $home . 'it/privacy/?a=1' )['uri'] && $home . 'privacy-policy/' === language_from_uri( $home . 'it/privacy-policy/' )['uri'], 'Translated and original words both lead to the page' );
+	$refused = set_slugs( array( 'it_IT' => array( 'contact' => 'chi-siamo', 'faq' => 'privacy-policy' ) ) );
+	$check( 2 === count( $refused ) && ! isset( slugs( 'it_IT' )['contact'] ) && ! isset( slugs( 'it_IT' )['faq'] ) && 'chi-siamo' === slugs( 'it_IT' )['about'], 'An address word already used in a language, or the original word of another page, is refused' );
 	$moved = export_json();
 	update_option( SLUGS_OPTION, array() );
 	update_option( OPTION, stored_settings( normalize_settings( array( 'base' => 'en_US', 'confirmed' => true ) ) ) );
@@ -257,6 +273,27 @@ try {
 	import_json( json_decode( wp_json_encode( $moved ), true ) );
 	$check( array( 'it_IT' => array( 'privacy-policy' => 'privacy', 'about' => 'chi-siamo' ) ) === get_option( SLUGS_OPTION ), 'Translated address words travel with the JSON export' );
 	$check( array( 'en_US', 'it_IT', 'es_ES', 'ru_RU' ) === locales() && 'Italiano' === settings()['languages']['it_IT']['name'], 'A site without languages takes the settings of the imported backup' );
+
+	// A JSON file cannot add markup that the source text does not have.
+	$file    = array(
+		'format'  => EXPORT_FORMAT,
+		'version' => 1,
+		'base'    => settings()['base'],
+		'strings' => array(
+			array(
+				'source'       => 'LangSail import <a href="/x/">test</a>.',
+				'kind'         => 'text',
+				'pages'        => array(),
+				'translations' => array(
+					'it_IT' => array( 'text' => 'Prova <a href="https://spam.example/">import</a> <a href="/x/">LangSail</a>.', 'status' => 'translated' ),
+					'es_ES' => array( 'text' => 'Prueba <a href="/x/">importada</a>.', 'status' => 'translated' ),
+				),
+			),
+		),
+	);
+	$imported = import_json( $file );
+	$key      = md5( 'LangSail import <a href="/x/">test</a>.' );
+	$check( 1 === $imported['translations'] && 1 === count( $imported['errors'] ) && ! isset( dictionary( 'it_IT' )[ $key ] ) && 'Prueba <a href="/x/">importada</a>.' === dictionary( 'es_ES' )[ $key ], 'JSON imports keep the tags of the source and refuse translations that add links' );
 
 	// Deleting the plugin keeps the data unless the owner asked otherwise.
 	if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {

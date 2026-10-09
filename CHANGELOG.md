@@ -37,3 +37,4 @@
 - Plugin Check (WordPress.org) passes with no errors or warnings.
 - Deleting the plugin keeps all data unless Settings > Your data > Delete all LangSail data is on; pages are never changed.
 - The JSON backup carries the settings; a site without languages takes them on import (the delete-data choice is never imported).
+- Audit fixes: JSON imports keep the tags of the source text (a file can no longer add links); translations to review are not shown until approved; an address word can lead to one page only; scans cover post type and term archives; the scan ability works in batches of 20 pages; concurrent scans no longer leave orphan rows.

@@ -101,8 +101,16 @@ function record_page( $page, array $units ) {
 			$wpdb->update( $t['strings'], array( 'seen' => $now ), array( 'id' => $id ) );
 		} else {
 			$wpdb->insert( $t['strings'], array( 'hash' => $hash, 'source' => $source, 'kind' => $kind, 'created' => $now, 'seen' => $now ) );
-			$id                = (int) $wpdb->insert_id;
-			$created[ $id ]    = $source;
+			$id = (int) $wpdb->insert_id;
+			if ( ! $id ) {
+				// Another scan of the same page (the editor's and the admin's at once) added it first.
+				$id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$t['strings']} WHERE hash = %s", $hash ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
+			} else {
+				$created[ $id ] = $source;
+			}
+			if ( ! $id ) {
+				continue;
+			}
 		}
 		$ids[] = $id;
 	}
@@ -159,7 +167,10 @@ function carry_over_translations( array $created, array $removed ) {
 	}
 }
 /**
- * Translations of a locale: hash => text. One query per request, kept in the object cache.
+ * Approved translations of a locale ("to review" ones wait, the base text shows): hash => text.
+ * One query per request, kept in the object cache.
+ * Limit: loads every translation of the locale, fine for sites up to a few thousand texts; past
+ * that, look up only the hashes of the page's units (units()) with one IN query.
  *
  * @param string $locale Locale.
  * @return array<string, string>
@@ -171,7 +182,7 @@ function dictionary( $locale ) {
 		return $found;
 	}
 	$t     = tables();
-	$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT s.hash, t.text FROM {$t['translations']} t JOIN {$t['strings']} s ON s.id = t.string_id WHERE t.locale = %s AND t.text <> ''", $locale ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names.
+	$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT s.hash, t.text FROM {$t['translations']} t JOIN {$t['strings']} s ON s.id = t.string_id WHERE t.locale = %s AND t.status = 'translated' AND t.text <> ''", $locale ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names.
 	$found = array_column( $rows, 'text', 'hash' );
 	wp_cache_set( 'dict_' . $locale, $found, 'langsail' );
 	return $found;
