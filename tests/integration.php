@@ -222,6 +222,39 @@ try {
 	$check( 'Qualcosa di completamente diverso.' === $message, 'Chat button messages are translated through the mintchat_message filter' );
 	save_translations( 'it_IT', array( (int) $other['id'] => '' ) );
 
+	// Cache: compiled maps, versions, translated pages.
+	$version = cache_version();
+	dictionary( 'it_IT' );
+	$dict_file = cache_dir() . '/dict-it_IT-' . $version . '.php';
+	$check( ! wp_is_writable( WP_CONTENT_DIR ) || ( is_readable( $dict_file ) && is_readable( $dict_file . '.ser' ) && read_compiled( $dict_file ) === dictionary( 'it_IT' ) ), 'The approved translations are compiled to files that read back the same map' );
+	save_translations( 'it_IT', array( (int) $other['id'] => 'Cache: versione nuova.' ) );
+	$check( cache_version() > $version && 'Cache: versione nuova.' === dictionary( 'it_IT' )[ md5( 'Something completely different here.' ) ], 'Saving a translation raises the cache version, so the new text is served at once' );
+	save_translations( 'it_IT', array( (int) $other['id'] => '' ) );
+	$_SERVER['REQUEST_METHOD'] = 'GET';
+	$calls                     = 0;
+	$translate                 = static function ( $html ) use ( &$calls ) {
+		++$calls;
+		return strtoupper( $html );
+	};
+	$check( page_fingerprint( '<!-- 12ms --><label for="consent_0b2bdc4655305840f667028b569cf154">A</label><p>x</p>' ) === page_fingerprint( '<!-- 15ms --><label for="consent_a6cb9033cafa69e0fab9becfccbaaa13">A</label><p>x</p>' ) && page_fingerprint( '<p>x</p>' ) !== page_fingerprint( '<p>y</p>' ), 'The page fingerprint ignores timing comments and random ids, never the content' );
+	$first  = cached_page( '<p>LangSail cache page</p>', 'it_IT', $translate );
+	$second = cached_page( '<p>LangSail cache page</p>', 'it_IT', $translate );
+	cached_page( '<p>LangSail cache page, changed</p>', 'it_IT', $translate );
+	$check( '<P>LANGSAIL CACHE PAGE</P>' === $first && $first === $second && 2 === $calls, 'A translated page is served from the cache until the page itself changes' );
+	$limit = static fn( $limits ) => array( 'max_pages_per_language' => 2 ) + $limits;
+	add_filter( 'langsail_cache_limits', $limit );
+	cached_page( '<p>LangSail cache page three</p>', 'it_IT', $translate );
+	remove_filter( 'langsail_cache_limits', $limit );
+	$check( count( (array) glob( cache_dir() . '/pages-' . cache_version() . '/it_IT/*.html' ) ) <= 2, 'The page cache keeps within its limit' );
+	bump_cache();
+	cached_page( '<p>LangSail cache page</p>', 'it_IT', $translate );
+	$check( 4 === $calls && array( cache_dir() . '/pages-' . cache_version() ) === (array) glob( cache_dir() . '/pages-*', GLOB_ONLYDIR ), 'A new cache version translates again and drops the older pages' );
+	$admins = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );
+	wp_set_current_user( (int) $admins[0] );
+	cached_page( '<p>LangSail cache page</p>', 'it_IT', $translate );
+	$check( 5 === $calls, 'Pages of logged-in users are never cached' );
+	wp_set_current_user( 0 );
+
 	// AI abilities and scans without a browser.
 	if ( function_exists( 'wp_get_ability' ) ) {
 		$admins = get_users( array( 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ) );

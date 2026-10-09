@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 // prepared or cast to an integer, and the results that pages read are cached.
 // phpcs:disable WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders
 
-const DB_VERSION = '1';
+const DB_VERSION = '2';
 const STATUSES   = array( 'translated', 'review' );
 
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\maybe_install' );
@@ -65,6 +65,9 @@ function install_tables() {
 			PRIMARY KEY  (string_id,locale)
 		) $charset;"
 	);
+	// Options read on every translated page exist from the start, so a missing one never costs a query.
+	add_option( SLUGS_OPTION, array() );
+	add_option( CACHE_VERSION, 1 );
 	update_option( 'langsail_db_version', DB_VERSION );
 }
 
@@ -168,23 +171,20 @@ function carry_over_translations( array $created, array $removed ) {
 }
 /**
  * Approved translations of a locale ("to review" ones wait, the base text shows): hash => text.
- * One query per request, kept in the object cache.
- * Limit: loads every translation of the locale, fine for sites up to a few thousand texts.
+ * Read from the compiled cache (cache.php); the database is queried once per cache version.
  *
  * @param string $locale Locale.
  * @return array<string, string>
  */
 function dictionary( $locale ) {
-	global $wpdb;
-	$found = wp_cache_get( 'dict_' . $locale, 'langsail' );
-	if ( is_array( $found ) ) {
-		return $found;
-	}
-	$t     = tables();
-	$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT s.hash, t.text FROM {$t['translations']} t JOIN {$t['strings']} s ON s.id = t.string_id WHERE t.locale = %s AND t.status = 'translated' AND t.text <> ''", $locale ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names.
-	$found = array_column( $rows, 'text', 'hash' );
-	wp_cache_set( 'dict_' . $locale, $found, 'langsail' );
-	return $found;
+	return compiled_map(
+		'dict-' . sanitize_file_name( $locale ),
+		static function () use ( $locale ) {
+			global $wpdb;
+			$t = tables();
+			return array_column( $wpdb->get_results( $wpdb->prepare( "SELECT s.hash, t.text FROM {$t['translations']} t JOIN {$t['strings']} s ON s.id = t.string_id WHERE t.locale = %s AND t.status = 'translated' AND t.text <> ''", $locale ), ARRAY_A ), 'text', 'hash' ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names.
+		}
+	);
 }
 
 /**
@@ -206,7 +206,6 @@ function save_translations( $locale, array $translations, $status = 'translated'
 			$wpdb->insert( $t['translations'], array( 'string_id' => $id, 'locale' => $locale, 'text' => $text, 'status' => in_array( $status, STATUSES, true ) ? $status : 'translated', 'updated' => $now ) );
 		}
 	}
-	wp_cache_delete( 'dict_' . $locale, 'langsail' );
 	do_action( 'langsail_translations_saved', $locale );
 }
 
@@ -309,18 +308,35 @@ function progress( array $locales ) {
  * @return array{total: int, done: array<string, int>}
  */
 function page_progress( $page ) {
+	$map = compiled_map( 'progress', __NAMESPACE__ . '\\build_progress' );
+	return $map[ $page ] ?? array(
+		'total' => 0,
+		'done'  => array(),
+	);
+}
+
+/**
+ * Every page with its number of texts and of approved translations per locale, for the compiled
+ * progress map.
+ *
+ * @return array<string, array{total: int, done: array<string, int>}>
+ */
+function build_progress() {
 	global $wpdb;
-	static $cache = array();
-	if ( ! isset( $cache[ $page ] ) ) {
-		$t              = tables();
-		$total          = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$t['pages']} WHERE page = %s", $page ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
-		$rows           = $wpdb->get_results( $wpdb->prepare( "SELECT t.locale, COUNT(*) AS n FROM {$t['pages']} p JOIN {$t['translations']} t ON t.string_id = p.string_id AND t.status = 'translated' WHERE p.page = %s GROUP BY t.locale", $page ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names.
-		$cache[ $page ] = array(
-			'total' => $total,
-			'done'  => array_map( 'intval', array_column( $rows, 'n', 'locale' ) ),
+	$t   = tables();
+	$map = array();
+	foreach ( $wpdb->get_results( "SELECT page, COUNT(*) AS n FROM {$t['pages']} GROUP BY page", ARRAY_A ) as $row ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
+		$map[ $row['page'] ] = array(
+			'total' => (int) $row['n'],
+			'done'  => array(),
 		);
 	}
-	return $cache[ $page ];
+	foreach ( $wpdb->get_results( "SELECT p.page, t.locale, COUNT(*) AS n FROM {$t['pages']} p JOIN {$t['translations']} t ON t.string_id = p.string_id AND t.status = 'translated' GROUP BY p.page, t.locale", ARRAY_A ) as $row ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names.
+		if ( isset( $map[ $row['page'] ] ) ) {
+			$map[ $row['page'] ]['done'][ $row['locale'] ] = (int) $row['n'];
+		}
+	}
+	return $map;
 }
 
 /**
@@ -338,6 +354,9 @@ function prune_pages( array $keep ) {
 	$t       = tables();
 	$removed = (int) $wpdb->query( $wpdb->prepare( "DELETE FROM {$t['pages']} WHERE page NOT IN (" . implode( ',', array_fill( 0, count( $keep ), '%s' ) ) . ')', $keep ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
 	wp_cache_delete( 'pages', 'langsail' );
+	if ( $removed ) {
+		bump_cache();
+	}
 	return $removed;
 }
 
@@ -355,6 +374,7 @@ function remove_unused() {
 		$wpdb->query( "DELETE FROM {$t['translations']} WHERE string_id IN ($in)" ); // phpcs:ignore WordPress.DB.PreparedSQL -- Integers.
 		$wpdb->query( "DELETE FROM {$t['strings']} WHERE id IN ($in)" ); // phpcs:ignore WordPress.DB.PreparedSQL -- Integers.
 		wp_cache_flush_group( 'langsail' );
+		bump_cache();
 	}
 	return count( $ids );
 }

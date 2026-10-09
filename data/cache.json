@@ -1,0 +1,9 @@
+{
+	"_note": "Translated pages kept per language in wp-content/cache/langsail; past the limit the oldest half is dropped. Volatile parts change on every load without changing the page (timing comments, random ids and anti-spam labels): they are left out of the page fingerprint, so such pages are still served from the cache.",
+	"max_pages_per_language": 2000,
+	"volatile": [
+		{ "pattern": "/<!--(?!\\[if)[\\s\\S]*?-->/", "replace": "" },
+		{ "pattern": "/<div[^>]*\\bff-hpsf-container\\b[\\s\\S]*?<input[^>]*>/", "replace": "" },
+		{ "pattern": "/(\\b(?:id|for)=[\"'][^\"']*?)[0-9a-f]{32}(?=[\"'])/", "replace": "$1" }
+	]
+}

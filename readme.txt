@@ -38,7 +38,7 @@ LangSail never calls an AI service. Through the WordPress Abilities API and the 
 
 * 0 KB of JavaScript on the site, no cookies, no browser storage, no external calls.
 * 0.7 KB of CSS, only on pages with the language switcher.
-* About 8 ms to translate a 150 KB page; pages in the base language are not touched.
+* Fast by design: translations are compiled into a file PHP keeps in memory (OPcache), and a translated page is translated once, then served again in about 0.6 ms with no database query until the page or a translation changes. Pages in the base language are not touched.
 * Your data stays yours: deleting the plugin keeps everything unless you ask otherwise, and one JSON file backs up texts, translations and settings.
 
 = Also =

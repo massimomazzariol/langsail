@@ -136,7 +136,8 @@ function translate_page( $html ) {
 	if ( '' === $html || ! is_html_response() ) {
 		return $html;
 	}
-	return translate_html( $html, current_language() );
+	$locale = current_language();
+	return cached_page( $html, $locale, fn( $page ) => translate_html( $page, $locale ) );
 }
 
 /**

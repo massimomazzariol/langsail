@@ -30,6 +30,7 @@ require_once __DIR__ . '/includes/slugs.php';
 require_once __DIR__ . '/includes/html.php';
 require_once __DIR__ . '/includes/placeholders.php';
 require_once __DIR__ . '/includes/store.php';
+require_once __DIR__ . '/includes/cache.php';
 require_once __DIR__ . '/includes/frontend.php';
 require_once __DIR__ . '/includes/scan.php';
 require_once __DIR__ . '/includes/abilities.php';
@@ -50,6 +51,7 @@ if ( is_admin() ) {
 add_action( 'init', __NAMESPACE__ . '\\load_textdomain' );
 add_action( 'admin_init', __NAMESPACE__ . '\\privacy_policy_content' );
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\activate' );
+register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\clear_cache' );
 add_filter( 'pre_update_option_active_plugins', __NAMESPACE__ . '\\load_first' );
 add_action( 'admin_init', __NAMESPACE__ . '\\ensure_load_first' );
 

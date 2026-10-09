@@ -28,3 +28,4 @@ if ( $langsail_admin ) {
 	$langsail_admin->remove_cap( 'langsail_translate' );
 }
 delete_option( 'langsail_db_version' );
+delete_option( 'langsail_cache_version' ); // The cache files themselves go on deactivation.

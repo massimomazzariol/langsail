@@ -64,9 +64,31 @@ Measured on WordPress 7.1 with Twenty Twenty-Five and five languages:
 | Switcher stylesheet | 0.7 KB, inlined, only on pages with the switcher |
 | Flags (optional) | about 0.7 KB per language, SVG |
 | `hreflang` links | under 0.1 KB per language |
-| Translating a page | about 8 ms for a 150 KB page, one cached dictionary query |
+| Translated page, served again | about 0.6 ms from the cache, **0 database queries** |
 | Base language pages | untouched: no output buffering |
 | Release ZIP | 182 KB, most of it the 201 optional flags |
+
+## Fast by design
+
+Most translation plugins read their translations from the database and rework the whole page on every visit. LangSail does that work once.
+
+| On every visit to a translated page | Usual approach | LangSail |
+| --- | --- | --- |
+| Finding the translations | Database queries | **None**: a compiled file PHP keeps in memory (OPcache), the way WordPress loads its own translations |
+| Translating the page | Every time | **Once**: then served as it is until the page or a translation changes |
+| Knowing when to refresh | Purge by hand, or stale pages | **Automatic**: a fingerprint of the page and one version number for translations, scans and settings |
+| Page caches and CDNs | Need care when the language is in a cookie | **Just work**: every language has its own address |
+
+Measured on PHP 8.4 (`tests/benchmark.php`, `tests/opcache-benchmark.php`):
+
+| | Before | Now |
+| --- | --- | --- |
+| Loading 5,000 translations | 4-6 ms, a database query | **0 ms** with OPcache, about 1 ms without |
+| Loading 50,000 translations | 50-75 ms and 12 MB | **0 ms and no extra memory** with OPcache, about 22 ms without |
+| A 150 KB page, translated again | 8-9 ms | **0.6 ms** |
+| LangSail database queries per translated page | 3 | **0** |
+
+The cache lives in `wp-content/cache/langsail/`: it fills itself, refreshes itself and is safe to delete. Pages of logged-in users are always translated live.
 
 ## Your data
 
@@ -78,6 +100,7 @@ LangSail never changes your pages: they stay in the base language exactly as you
 | Translated address words | option `langsail_slugs` |
 | Texts, the pages they appear on, translations | tables `{prefix}langsail_strings`, `{prefix}langsail_string_pages`, `{prefix}langsail_translations` |
 | Translator role | role `langsail_translator`, capability `langsail_translate` |
+| Cache (rebuilt from the above, safe to delete, emptied on deactivation) | folder `wp-content/cache/langsail/`, option `langsail_cache_version` |
 
 | You... | What happens |
 | --- | --- |
