@@ -265,6 +265,8 @@ try {
 	$check( home_url( '/it/privacy/?a=1' ) === localize_url( home_url( '/privacy-policy/?a=1' ), 'it_IT' ) && home_url( '/es/privacy-policy/' ) === localize_url( home_url( '/privacy-policy/' ), 'es_ES' ), 'Links use the translated words of the address in that language only' );
 	$check( $home . 'privacy-policy/?a=1' === language_from_uri( $home . 'it/privacy/?a=1' )['uri'] && $home . 'privacy-policy/' === language_from_uri( $home . 'it/privacy-policy/' )['uri'], 'Translated and original words both lead to the page' );
 	$refused = set_slugs( array( 'it_IT' => array( 'contact' => 'chi-siamo', 'faq' => 'privacy-policy' ) ) );
+	$check( array() === set_slugs( array( 'es_ES' => array( 'privacy-policy' => 'privacy' ) ) ) && 'privacy' === slugs( 'es_ES' )['privacy-policy'] && home_url( '/es/privacy/' ) === localize_url( home_url( '/privacy-policy/' ), 'es_ES' ), 'The same word can serve different languages (/it/privacy/ and /es/privacy/)' );
+	set_slugs( array( 'es_ES' => array( 'privacy-policy' => '' ) ) );
 	$check( 2 === count( $refused ) && ! isset( slugs( 'it_IT' )['contact'] ) && ! isset( slugs( 'it_IT' )['faq'] ) && 'chi-siamo' === slugs( 'it_IT' )['about'], 'An address word already used in a language, or the original word of another page, is refused' );
 	$moved = export_json();
 	update_option( SLUGS_OPTION, array() );
