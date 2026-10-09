@@ -169,8 +169,7 @@ function carry_over_translations( array $created, array $removed ) {
 /**
  * Approved translations of a locale ("to review" ones wait, the base text shows): hash => text.
  * One query per request, kept in the object cache.
- * Limit: loads every translation of the locale, fine for sites up to a few thousand texts; past
- * that, look up only the hashes of the page's units (units()) with one IN query.
+ * Limit: loads every translation of the locale, fine for sites up to a few thousand texts.
  *
  * @param string $locale Locale.
  * @return array<string, string>
