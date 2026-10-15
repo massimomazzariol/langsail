@@ -4,7 +4,7 @@ Tags: multilingual, translation, language switcher, ai translation, hreflang
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.1.2
+Stable tag: 0.1.3
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -92,6 +92,9 @@ Add it to Settings > Never translate, or mark it in HTML with translate="no" or 
 3. Settings: base language, translation languages, indexing threshold, never-translate list.
 
 == Changelog ==
+
+= 0.1.3 =
+* The SEO Framework sitemap: pages it leaves out (noindex, redirect, excluded) have their language versions left out too.
 
 = 0.1.2 =
 * Fix: The SEO Framework sitemap no longer lists the 404 and search pages as addresses, and it is rebuilt when the settings change.

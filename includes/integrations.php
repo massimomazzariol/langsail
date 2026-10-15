@@ -34,6 +34,9 @@ function tsf_sitemap_urls( $urls ) {
 		}
 		$url     = home_url( $page );
 		$post_id = url_to_postid( $url ) ? url_to_postid( $url ) : ( '/' === $page ? (int) get_option( 'page_on_front' ) : 0 );
+		if ( $post_id && function_exists( 'tsf' ) && ! \tsf()->sitemap()->utils()->is_post_included_in_sitemap( $post_id ) ) {
+			continue; // Left out of the base sitemap (noindex, redirect, excluded): so are its translations.
+		}
 		$lastmod = $post_id ? get_post_modified_time( 'Y-m-d H:i:s', true, $post_id ) : '';
 		foreach ( array_keys( settings()['languages'] ) as $locale ) {
 			if ( is_ready( $locale, $page ) ) {

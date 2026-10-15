@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- The SEO Framework sitemap: a page it leaves out (noindex, redirect, excluded IDs) has its language versions left out too.
+
 ## 0.1.2
 
 - The SEO Framework sitemap no longer lists the "(404)" and "(search)" table keys as addresses (/it/(404)), and it is rebuilt when the settings change.

@@ -28,11 +28,15 @@ $check           = static function ( $condition, $description ) use ( &$langsail
 $cleanup = static function () {
 	global $wpdb;
 	$t = tables();
-	$wpdb->query( $wpdb->prepare( "DELETE FROM {$t['pages']} WHERE page IN (%s, %s, %s)", '/langsail-test-page/', '/langsail-keep-test/', '(langsail-test)' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$t['pages']} WHERE page IN (%s, %s, %s, %s)", '/langsail-test-page/', '/langsail-keep-test/', '(langsail-test)', '/langsail-test-excluded/' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
 	foreach ( array( 'LangSail test sentence one.', 'LangSail test alt', 'LangSail keep test', 'LangSail test sentence one, edited.', 'Something completely different here.', 'LangSail import <a href="/x/">test</a>.' ) as $source ) {
 		$id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$t['strings']} WHERE hash = %s", md5( $source ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
 		$wpdb->delete( $t['translations'], array( 'string_id' => $id ) );
 		$wpdb->delete( $t['strings'], array( 'id' => $id ) );
+	}
+	$excluded_page = get_page_by_path( 'langsail-test-excluded' );
+	if ( $excluded_page ) {
+		wp_delete_post( $excluded_page->ID, true );
 	}
 	wp_cache_flush();
 };
@@ -187,9 +191,14 @@ try {
 	$map_xml = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' . home_url( $page ) . '</loc><lastmod>2026-10-08</lastmod></url><url><loc>https://example.com/x/</loc></url></urlset>';
 	$map_out = localize_sitemap( $map_xml );
 	$check( str_contains( $map_out, 'xmlns:xhtml=' ) && 2 === substr_count( $map_out, '<loc>' . esc_url( home_url( $page ) ) ) + substr_count( $map_out, '<loc>' . esc_url( home_url( '/it' . $page ) ) ) && ! str_contains( $map_out, home_url( '/ru' . $page ) ) && str_contains( $map_out, 'hreflang="x-default"' ) && str_contains( $map_out, '<loc>https://example.com/x/</loc>' ), 'The sitemap lists every ready language version with alternates and leaves other hosts alone' );
+	$excluded_page = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_name' => 'langsail-test-excluded', 'post_title' => 'LangSail test excluded' ) );
+	add_filter( 'the_seo_framework_sitemap_exclude_ids', fn( $ids ) => array_merge( (array) $ids, array( $excluded_page ) ) );
 	record_page( '(langsail-test)', array( 'LangSail test sentence one.' => 'text' ) );
+	record_page( '/langsail-test-excluded/', array( 'LangSail test sentence one.' => 'text' ) );
 	$tsf_urls = array_keys( tsf_sitemap_urls( array() ) );
 	$check( is_ready( 'it_IT', '(langsail-test)' ) && in_array( localize_url( home_url( $page ), 'it_IT' ), $tsf_urls, true ) && ! preg_grep( '/\(/', $tsf_urls ), 'The SEO Framework sitemap lists ready pages, never the 404 and search keys' );
+	$check( ! function_exists( 'tsf' ) || ( is_ready( 'it_IT', '/langsail-test-excluded/' ) && ! in_array( localize_url( home_url( '/langsail-test-excluded/' ), 'it_IT' ), $tsf_urls, true ) ), 'Pages The SEO Framework leaves out of its sitemap (noindex, excluded) leave their translations out too' );
+	wp_delete_post( $excluded_page, true );
 
 	// Real pages: scan the home page, translate one of its texts, read it in Italian.
 	$http     = array( 'timeout' => 60 ); // Local sites can be slow on a cold request.
