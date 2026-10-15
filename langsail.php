@@ -2,7 +2,7 @@
 /**
  * Plugin Name: LangSail
  * Description: Cookie-free multilingual sites with one structure: pages are built once in the base language and every text is translated from a table.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Requires at least: 7.0
  * Requires PHP: 8.1
  * Plugin URI: https://github.com/massimomazzariol/langsail
@@ -20,7 +20,7 @@ namespace LangSail;
 
 defined( 'ABSPATH' ) || exit;
 
-const VERSION = '0.1.1';
+const VERSION = '0.1.2';
 const FILE    = __FILE__;
 
 require_once __DIR__ . '/includes/languages.php';

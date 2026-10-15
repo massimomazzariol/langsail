@@ -28,7 +28,7 @@ $check           = static function ( $condition, $description ) use ( &$langsail
 $cleanup = static function () {
 	global $wpdb;
 	$t = tables();
-	$wpdb->query( $wpdb->prepare( "DELETE FROM {$t['pages']} WHERE page IN (%s, %s)", '/langsail-test-page/', '/langsail-keep-test/' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
+	$wpdb->query( $wpdb->prepare( "DELETE FROM {$t['pages']} WHERE page IN (%s, %s, %s)", '/langsail-test-page/', '/langsail-keep-test/', '(langsail-test)' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
 	foreach ( array( 'LangSail test sentence one.', 'LangSail test alt', 'LangSail keep test', 'LangSail test sentence one, edited.', 'Something completely different here.', 'LangSail import <a href="/x/">test</a>.' ) as $source ) {
 		$id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$t['strings']} WHERE hash = %s", md5( $source ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name.
 		$wpdb->delete( $t['translations'], array( 'string_id' => $id ) );
@@ -187,6 +187,9 @@ try {
 	$map_xml = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' . home_url( $page ) . '</loc><lastmod>2026-10-08</lastmod></url><url><loc>https://example.com/x/</loc></url></urlset>';
 	$map_out = localize_sitemap( $map_xml );
 	$check( str_contains( $map_out, 'xmlns:xhtml=' ) && 2 === substr_count( $map_out, '<loc>' . esc_url( home_url( $page ) ) ) + substr_count( $map_out, '<loc>' . esc_url( home_url( '/it' . $page ) ) ) && ! str_contains( $map_out, home_url( '/ru' . $page ) ) && str_contains( $map_out, 'hreflang="x-default"' ) && str_contains( $map_out, '<loc>https://example.com/x/</loc>' ), 'The sitemap lists every ready language version with alternates and leaves other hosts alone' );
+	record_page( '(langsail-test)', array( 'LangSail test sentence one.' => 'text' ) );
+	$tsf_urls = array_keys( tsf_sitemap_urls( array() ) );
+	$check( is_ready( 'it_IT', '(langsail-test)' ) && in_array( localize_url( home_url( $page ), 'it_IT' ), $tsf_urls, true ) && ! preg_grep( '/\(/', $tsf_urls ), 'The SEO Framework sitemap lists ready pages, never the 404 and search keys' );
 
 	// Real pages: scan the home page, translate one of its texts, read it in Italian.
 	$http     = array( 'timeout' => 60 ); // Local sites can be slow on a cold request.

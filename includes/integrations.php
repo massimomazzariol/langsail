@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 add_filter( 'the_seo_framework_sitemap_additional_urls', __NAMESPACE__ . '\\tsf_sitemap_urls' );
 add_action( 'langsail_translations_saved', __NAMESPACE__ . '\\tsf_clear_sitemap' );
 add_action( 'langsail_page_scanned', __NAMESPACE__ . '\\tsf_clear_sitemap' );
+add_action( 'update_option_' . OPTION, __NAMESPACE__ . '\\tsf_clear_sitemap' ); // Languages, threshold or never-translate list.
 
 // Mintchat: the pre-filled WhatsApp message lives inside a link, not in the page text.
 add_filter( 'mintchat_message', __NAMESPACE__ . '\\translate_string' );
@@ -28,6 +29,9 @@ function tsf_sitemap_urls( $urls ) {
 		return $urls;
 	}
 	foreach ( array_keys( pages() ) as $page ) {
+		if ( '/' !== substr( $page, 0, 1 ) ) {
+			continue; // The "(404)" and "(search)" keys are not addresses.
+		}
 		$url     = home_url( $page );
 		$post_id = url_to_postid( $url ) ? url_to_postid( $url ) : ( '/' === $page ? (int) get_option( 'page_on_front' ) : 0 );
 		$lastmod = $post_id ? get_post_modified_time( 'Y-m-d H:i:s', true, $post_id ) : '';

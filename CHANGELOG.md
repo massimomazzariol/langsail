@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- The SEO Framework sitemap no longer lists the "(404)" and "(search)" table keys as addresses (/it/(404)), and it is rebuilt when the settings change.
+
 ## 0.1.1
 
 - Audit fixes: JSON imports keep the tags of the source text (a file can no longer add links); translations to review are not shown until approved; an address word can lead to one page only; scans cover post type and term archives; the scan ability works in batches of 20 pages; concurrent scans no longer leave orphan rows.
