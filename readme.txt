@@ -4,7 +4,7 @@ Tags: multilingual, translation, language switcher, ai translation, hreflang
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.1.0
+Stable tag: 0.1.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -92,6 +92,11 @@ Add it to Settings > Never translate, or mark it in HTML with translate="no" or 
 3. Settings: base language, translation languages, indexing threshold, never-translate list.
 
 == Changelog ==
+
+= 0.1.1 =
+* Safer JSON imports (a file can no longer add links), only approved translations shown, scans of post type and term archives.
+* Faster translated pages: translations and progress compiled into cached files, no database query once a page is cached.
+* Fix: texts added to the never-translate list after a scan no longer keep a language version at noindex (save the settings once).
 
 = 0.1.0 =
 * First version: base language and translation languages, URL prefixes, text units and markers, translation table with scan and pages overview, page translation, hreflang, language switcher block, translated addresses, AI abilities with owner instructions, Translator role, JSON and PO import and export, Italian interface.
