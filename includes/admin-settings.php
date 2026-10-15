@@ -179,6 +179,7 @@ function save_settings() {
 	);
 	update_option( OPTION, stored_settings( $settings ) );
 	settings( true );
+	unlink_kept();
 	install_language_packs( locales() );
 	wp_safe_redirect( admin_url( 'admin.php?page=langsail-settings&updated=1' ) );
 	exit;

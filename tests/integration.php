@@ -134,6 +134,11 @@ try {
 	update_option( OPTION, array_merge( get_option( OPTION ), array( 'keep' => array( 'Brand Name Kept' ) ) ) );
 	settings( true );
 	$check( 1 === record_page( '/langsail-keep-test/', array( 'Brand Name Kept' => 'text', '<strong>Brand Name Kept</strong>' => 'text', 'LangSail keep test' => 'attr' ) ) && is_kept( '<strong>Brand Name Kept</strong>' ), 'Never-translate texts are not recorded, with or without formatting' );
+	update_option( OPTION, array_merge( get_option( OPTION ), array( 'keep' => array( 'Brand Name Kept', 'LangSail keep test' ) ) ) );
+	settings( true );
+	$check( 1 === unlink_kept() && ! isset( pages()['/langsail-keep-test/'] ), 'A text added to the never-translate list stops counting on the pages that already listed it' );
+	update_option( OPTION, array_merge( get_option( OPTION ), array( 'keep' => array( 'Brand Name Kept' ) ) ) );
+	settings( true );
 	$page = '/langsail-test-page/';
 	$new  = record_page( $page, array( 'LangSail test sentence one.' => 'text', 'LangSail test alt' => 'attr' ) );
 	$check( 2 === $new && 2 === pages()[ $page ], 'Scanned units are stored and linked to their page' );

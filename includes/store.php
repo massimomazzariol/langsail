@@ -128,6 +128,33 @@ function record_page( $page, array $units ) {
 }
 
 /**
+ * Unlink from their pages the texts now on the "never translate" list: recorded before they joined
+ * it, they would count as untranslated (indexing threshold) until every page is scanned again.
+ *
+ * @return int Number of page links removed.
+ */
+function unlink_kept() {
+	global $wpdb;
+	if ( ! settings()['keep'] ) {
+		return 0;
+	}
+	$t   = tables();
+	$ids = array();
+	foreach ( $wpdb->get_results( "SELECT DISTINCT s.id, s.source FROM {$t['strings']} s JOIN {$t['pages']} p ON p.string_id = s.id", ARRAY_A ) as $row ) { // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names.
+		if ( is_kept( $row['source'] ) ) {
+			$ids[] = (int) $row['id'];
+		}
+	}
+	if ( ! $ids ) {
+		return 0;
+	}
+	$removed = (int) $wpdb->query( 'DELETE FROM ' . $t['pages'] . ' WHERE string_id IN (' . implode( ',', $ids ) . ')' ); // phpcs:ignore WordPress.DB.PreparedSQL -- Integers.
+	wp_cache_delete( 'pages', 'langsail' );
+	bump_cache();
+	return $removed;
+}
+
+/**
  * Edited texts: each new text takes the translations of the most similar text that left the same
  * page (at least the share in data/similarity.json), marked "to review", so a small change in the
  * base language does not throw away the translations.
